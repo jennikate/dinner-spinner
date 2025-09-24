@@ -12,6 +12,10 @@ Design
 Product & Repo Structure
 - [Repo structure](#repo-structure)
 
+Version
+- [Deployed](#version)
+- [In Development](#version)
+
 ----
 
 ## Repo Structure
@@ -33,8 +37,19 @@ dinner-spinner/
 ├── server/
 ```
 
-**Client**: React Typescript frontend
+**Client**: React Typescript frontendg
 **Design**: process, notes, diagrams
 **Server**: Flask, SQLAlchemy, Marshmallow/smorest, SQLite backend
 
 ----
+
+## Version
+
+**Deployed**: 0.0
+
+**In development**: 0.1
+- add and view recipes
+- spin for [x] days of suggestions
+- select a recipe from list to pin, then spin rest
+- select a spin result to pin, then spin rest
+- create list of ingredients from suggestions
