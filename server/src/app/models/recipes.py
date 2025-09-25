@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from sqlalchemy.dialects.sqlite import JSON
 
-from extensions import db
+from app.extensions import db
 
 ###################################################################################################
 #  Body
