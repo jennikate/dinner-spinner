@@ -1,0 +1,57 @@
+# Bytecode files
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+.ENV/
+
+# Environment variables
+.env
+.env.*
+
+# SQLite database files
+*.db
+*.sqlite3
+
+# Flask instance folder (if used)
+instance/
+
+# Pytest cache
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# IDE / editor settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs and temp files
+*.log
+*.tmp
+*.bak
+*.swp
+
+# MacOS / Linux system files
+.DS_Store
+Thumbs.db
+
+# Optional: migrations if you use Flask-Migrate
+migrations/
