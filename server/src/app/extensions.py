@@ -5,6 +5,7 @@ Extention initialisations.
 # Imports
 ###################################################################################################
 
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_smorest import Api
 
@@ -12,5 +13,6 @@ from flask_smorest import Api
 # Body
 ###################################################################################################
 
-db = SQLAlchemy()
 api = Api()
+db = SQLAlchemy()
+migrate = Migrate()
