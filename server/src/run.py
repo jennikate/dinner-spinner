@@ -14,7 +14,6 @@ import os
 from dotenv import load_dotenv
 from logging.handlers import RotatingFileHandler
 
-
 from app import create_app
 
 ###################################################################################################
@@ -61,7 +60,7 @@ if __name__ == "__main__":
     debug_env = os.getenv("FLASK_DEBUG", "0").lower()
     debug_mode = debug_env in ("1", "true", "yes")
 
-    app.logger.info("---------- Starting App ----------")
+    app.logger.debug("---------- Starting App ----------")
     app.logger.info(f"Running with config for: {config_level}")
     app.logger.info(f"Running in debug mode? {debug_mode}")
     app.logger.info(f"Log level: {log_level}")

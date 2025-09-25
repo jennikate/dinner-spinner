@@ -43,6 +43,13 @@ run
 source .env
 ```
 
+5. Run migrations
+As it is running on SQLite on your local device for now you need to 
+
+a. make sure you are in the `server` folder
+b. run `flask db upgrade`
+
+
 5. Run the app
 TODO: replace this with a script to run both BE and FE
 

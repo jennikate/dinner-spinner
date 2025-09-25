@@ -54,4 +54,4 @@ coverage.xml
 Thumbs.db
 
 # Optional: migrations if you use Flask-Migrate
-migrations/
+# migrations/
