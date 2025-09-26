@@ -8,13 +8,13 @@ Tests for the recipe & recipes endpoint resource in the `src.app.routes.v1/recip
 
 from src.app.extensions import db as _db
 from ....fixtures import base_recipe
-from ...helpers import assert_generic_error, assert_sqlalchemy_error
+from ....helpers import assert_generic_error, assert_sqlalchemy_error
 
 # =====================================
 #  Body
 # =====================================
 
-class TestPostRecipe:
+class TestPostRecipeWithDbErrors:
     def test_post_recipe_sqlalchemy_error(self, client, monkeypatch, base_recipe):
         """
         Tests a 500 response with a message is returned if an SQLAlchemy error is raised

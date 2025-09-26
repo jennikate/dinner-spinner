@@ -14,6 +14,7 @@ from alembic.config import Config
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from src.app import create_app, db as _db # _db to be clear this is the test instance
+from src.app.models.recipes import Recipe 
 
 # =====================================
 # Configuration & setup
@@ -75,7 +76,35 @@ def session(app):
     _db.session = session
 
     yield session
-
-    transaction.rollback()
+    if transaction.is_active:
+        transaction.rollback()
     connection.close()
     session.remove()
+
+# =====================================
+# Seeds
+# =====================================
+
+@pytest.fixture(scope="function")
+def seeded_recipes(app, db):
+    recipes = [
+        Recipe(
+            recipe_name="My simple recipe",
+            instructions=[
+                {"step_number": 1,"instruction": "First thing you do is"},
+                {"step_number": 2,"instruction": "Second thing you do is"}
+            ]
+        ),
+        Recipe(
+            recipe_name="My other recipe",
+            instructions=[
+                {"step_number": 1,"instruction": "First thing you do is"},
+                {"step_number": 2,"instruction": "Second thing you do is"}
+            ]
+        )
+    ]
+    # Make sure to add recipes within app context
+    with app.app_context():
+        db.session.add_all(recipes)
+        db.session.commit()
+    return recipes

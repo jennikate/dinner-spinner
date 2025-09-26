@@ -5,7 +5,11 @@ This defines the Marshmallow schemas for recipes for the API.
 # Imports
 # =====================================
 
-from marshmallow import Schema, fields
+from marshmallow import Schema, ValidationError, fields, validates, validates_schema
+from sqlalchemy import select
+
+from ..extensions import db as _db
+from ..models.recipes import Recipe
 
 
 # =====================================
@@ -47,3 +51,28 @@ class RecipeSchema(Schema):
             "example": "Beef Goulash"
         }
     )
+
+    # validates_schema runs after all fields are deserialized, so instructions can be a nested list safely.
+    @validates_schema
+    def validate_unique_recipe_name(self, data, **kwargs):
+        """
+        Ensure recipe_name is valid and unique in SQLite.
+        """
+        name = data.get("recipe_name")
+        if not name.strip():
+            raise ValidationError("Name must not be empty.")
+        
+        if len(name) > 64:
+            raise ValidationError("recipe_name must not exceed 64 characters.")
+
+        exists_flag = _db.session.query(
+            _db.session.query(Recipe)
+            .filter(Recipe.recipe_name.ilike(name))  # ilike() ensures case-insensitive comparison in SQLite
+            .exists()
+        ).scalar()
+
+        if exists_flag:
+            raise ValidationError(
+                f"There is already a recipe with name: {name}.", field_name="recipe_name"
+            )
+            # field_name="recipe_name" attaches the error to the correct field in the Marshmallow error response.

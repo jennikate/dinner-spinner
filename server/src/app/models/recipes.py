@@ -24,7 +24,7 @@ class Recipe(db.Model):
     __tablename__ = 'recipes'
 
     id = db.Column(Uuid(), primary_key=True, default=uuid4)
-    recipe_name = db.Column(db.String(32), nullable=False, unique=True)
+    recipe_name = db.Column(db.String(64), nullable=False, unique=True)
     instructions = db.Column(JSON, nullable=False)
     notes = db.Column(db.String(1024), nullable=True)
 

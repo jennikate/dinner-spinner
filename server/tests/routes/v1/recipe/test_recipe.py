@@ -13,9 +13,9 @@ from ....fixtures import base_recipe
 # =====================================
 
 class TestPostRecipe:
-    def test_post_recipe_name_only(self, client, base_recipe):
+    def test_post_recipe_mandatory_only(self, client, base_recipe):
         """
-        Tests the bare minimum for recipe creation can be posted - a name.
+        Tests only the required fields are sent.
         """
         response = client.post("/v1/recipe", json=base_recipe)
         data = response.get_json()
@@ -32,7 +32,7 @@ class TestPostRecipe:
 
     def test_post_recipe_with_notes(self, client, base_recipe):
         """
-        Tests the bare minimum for recipe creation can be posted - a name.
+        Tests all fields are sent.
         """
         new_recipe = {
             **base_recipe,
@@ -46,6 +46,36 @@ class TestPostRecipe:
             **base_recipe, # unpack (spread operator)
             "id": data["id"], # UUID is generated
             "notes": "I wrote some notes"
+        }
+
+        assert response.status_code == 201
+        assert data == expected_response
+
+
+    def test_post_recipe_string_steps_are_converted_to_int(self, client, base_recipe):
+        """
+        Tests even if we send the step as a string its accepted and returned.
+        """
+        new_recipe = {
+            "recipe_name": "My simple recipe",
+            "instructions": [
+                {
+                    "step_number": "1",
+                    "instruction": "First thing you do is"
+                },
+                {
+                    "step_number": 2,
+                    "instruction": "Second thing you do is"
+                }
+            ]
+        } 
+        response = client.post("/v1/recipe", json=new_recipe)
+        data = response.get_json()
+
+        expected_response = {
+            **base_recipe, # unpack (spread operator)
+            "id": data["id"], # UUID is generated
+            "notes": None
         }
 
         assert response.status_code == 201
