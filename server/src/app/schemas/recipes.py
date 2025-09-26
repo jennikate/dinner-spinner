@@ -5,7 +5,7 @@ This defines the Marshmallow schemas for the API.
 # Imports
 # =====================================
 
-from Marshmallow import Schema, fields
+from marshmallow import Schema, fields
 
 
 # =====================================

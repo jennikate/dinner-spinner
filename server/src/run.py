@@ -14,7 +14,7 @@ import os
 from dotenv import load_dotenv
 from logging.handlers import RotatingFileHandler
 
-from app import create_app
+from .app import create_app
 
 # =====================================
 # Body

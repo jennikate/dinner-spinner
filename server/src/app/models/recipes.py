@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from sqlalchemy.dialects.sqlite import JSON
 
-from app.extensions import db
+from ..extensions import db
 
 # =====================================
 #  Body
@@ -18,7 +18,7 @@ class Recipe(db.Model):
     SQLAlchemy model for the recipe table
 
     :recipe_name: A brief name for the recipe
-    :instructions: A set of steps in JSON format each with {"step_number": "<number>", "instruction": <paragraph>}
+    :instructions: A set of steps in JSON format each with {"step_number": 1, "instruction": <paragraph>}
     :notes: Optional additional string of notes the user wants to add
     """
     __tablename__ = 'recipes'
