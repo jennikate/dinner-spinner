@@ -20,10 +20,10 @@ from .models import * # Import models so they are registered with SQLAlchemy
 # =====================================
 # Body
 # =====================================
-def register_blueprints(app):
+def register_blueprints(api, app):
     app.logger.debug("---------- Starting register_blueprints ----------")
     
-    app.register_blueprint(RecipeBlueprint)
+    api.register_blueprint(RecipeBlueprint)
 
     app.logger.debug("---------- Finished register_blueprints ----------")
 
@@ -42,12 +42,13 @@ def create_app(config_name):
     local functions.
     """
     app = Flask(__name__)
-    app.logger.info("---------- Starting create_app ----------")
+    app.logger.debug("---------- Starting create_app ----------")
     
     app.config.from_object(config[config_name])
     register_extensions(app)
-    register_blueprints(app)
+    register_blueprints(api, app)
 
     app.logger.debug(f"Database location -> {config[config_name].SQLALCHEMY_DATABASE_URI}")
-    app.logger.info("---------- Finished create_app ----------")
+    app.logger.debug(f"Swagger location -> {config[config_name].OPENAPI_SWAGGER_UI_PATH}")
+    app.logger.debug("---------- Finished create_app ----------")
     return app

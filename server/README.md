@@ -10,3 +10,6 @@ Requirements
 
 - [Installation](../docs/server/installation.md)
 - [Development](../docs/server/development.md)
+
+
+Swagger available on http://localhost:5000/swagger-ui
