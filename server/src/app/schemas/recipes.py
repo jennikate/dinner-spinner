@@ -1,5 +1,5 @@
 """
-This defines the Marshmallow schemas for the API.
+This defines the Marshmallow schemas for recipes for the API.
 """
 # =====================================
 # Imports
@@ -20,6 +20,10 @@ class MessageSchema(Schema):
 # RECIPES
 # ------------------
 
+class InstructionSchema(Schema):
+    step_number = fields.Int(required=True)
+    instruction = fields.Str(required=True)
+
 class RecipeSchema(Schema):
     id = fields.UUID(dump_only=True)
     recipe_name = fields.Str(
@@ -29,7 +33,8 @@ class RecipeSchema(Schema):
             "example": "Beef Goulash"
         }
     )
-    instructions = fields.Dict(
+    instructions = fields.List(
+        fields.Nested(InstructionSchema),
         required=True, 
         metadata={
             "description": "Step by step instructions in JSON with a key for step_number, and a key for instruction", 
