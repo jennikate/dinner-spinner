@@ -4,3 +4,13 @@ addopts = "--strict-markers -ra -q"
 testpaths = [
     "tests"
 ]
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
+# Omit files or patterns from the coverage report
+omit = [
+    "run.py",
+]
