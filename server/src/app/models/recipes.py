@@ -1,30 +1,30 @@
-###################################################################################################
+# =====================================
 #  Imports
-###################################################################################################
+# =====================================
 
 from sqlalchemy import Uuid
 from uuid import uuid4
 
 from sqlalchemy.dialects.sqlite import JSON
 
-from app.extensions import db
+from ..extensions import db
 
-###################################################################################################
+# =====================================
 #  Body
-###################################################################################################
+# =====================================
 
 class Recipe(db.Model):
     """
     SQLAlchemy model for the recipe table
 
     :recipe_name: A brief name for the recipe
-    :instructions: A set of steps in JSON format each with {"step_number": "<number>", "instruction": <paragraph>}
+    :instructions: A set of steps in JSON format each with {"step_number": 1, "instruction": <paragraph>}
     :notes: Optional additional string of notes the user wants to add
     """
     __tablename__ = 'recipes'
 
     id = db.Column(Uuid(), primary_key=True, default=uuid4)
-    recipe_name = db.Column(db.String(32), nullable=False, unique=True)
+    recipe_name = db.Column(db.String(64), nullable=False, unique=True)
     instructions = db.Column(JSON, nullable=False)
     notes = db.Column(db.String(1024), nullable=True)
 
@@ -47,83 +47,4 @@ class Recipe(db.Model):
 
     def __repr__(self):
         return f"<Recipe: {self.recipe_name}>"
-
-
-class IngredientType(db.Model):
-    """
-    SQLAlchemy model for the ingredient_type table
-
-    :type: A type that can be searched on later, e.g. store_cupboard, fresh
-    """
-    __tablename__ = 'ingredient_types'
-
-    id = db.Column(Uuid(), primary_key=True, default=uuid4)
-    ingredient_type = db.Column(db.String(32), nullable=False)
-
-    ingredients = db.relationship('Ingredient', back_populates='ingredient_type')
-
-    def __repr__(self):
-        return f"<ingredient_type: {self.ingredient_type}>"
-
-
-class Ingredient(db.Model):
-    """
-    SQLAlchemy model for the ingredient table
-
-    :ingredient_name: The name of the ingredient
-    :type: A type that can be searched on later, e.g. store_cupboard, fresh
-    """
-    __tablename__ = 'ingredients'
-
-    id = db.Column(Uuid(), primary_key=True, default=uuid4)
-    ingredient_name = db.Column(db.String(32), nullable=False)
-    type_id = db.Column(db.UUID, db.ForeignKey('ingredient_types.id'), nullable=True)
-
-    ingredient_type = db.relationship('IngredientType', back_populates='ingredients')
-    recipe_ingredients = db.relationship('RecipeIngredient', back_populates='ingredient')
-
-    def __repr__(self):
-        return f"<Ingredient: {self.ingredient_name}>"
-
-
-class Unit(db.Model):
-    """
-    SQLAlchemy model for the unit table
-
-    :unit_name: The name of the unit
-    :abbreviation: The common short form of the unit name
-    """
-    __tablename__ = 'units'
-
-    id = db.Column(Uuid(), primary_key=True, default=uuid4)
-    unit_name = db.Column(db.String(32), nullable=False)
-    abbreviation = db.Column(db.String(16), nullable=True)
-
-    recipe_ingredients = db.relationship('RecipeIngredient', back_populates='unit')
-
-    def __repr__(self):
-        return f"<unit: {self.unit_name}>"
-    
-
-class RecipeIngredient(db.Model):
-    """
-    SQLAlchemy model for the recipe_ingredient table
-
-    :amount: The amount of the ingredient
-    """
-    __tablename__ = 'recipe_ingredients'
-
-    id = db.Column(Uuid(), primary_key=True, default=uuid4)
-    amount = db.Column(db.Float, nullable=False)
-
-    recipe_id = db.Column(db.UUID, db.ForeignKey('recipes.id'), nullable=False)
-    ingredient_id = db.Column(db.UUID, db.ForeignKey('ingredients.id'), nullable=False)
-    unit_id = db.Column(db.UUID, db.ForeignKey('units.id'), nullable=False)
-
-    recipe = db.relationship('Recipe', back_populates='recipe_ingredients')
-    ingredient = db.relationship('Ingredient', back_populates='recipe_ingredients')
-    unit = db.relationship('Unit', back_populates='recipe_ingredients')
-
-
-    def __repr__(self):
-        return f"<RecipeIngredient: {self.amount} {self.unit.unit_name} of {self.ingredient.ingredient_name}>"
+   

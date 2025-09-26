@@ -1,16 +1,16 @@
 """
 Application configuration.
 """
-###################################################################################################
+# =====================================
 # Imports
-###################################################################################################
+# =====================================
 
 import os
 import secrets
 
-###################################################################################################
+# =====================================
 # Body
-###################################################################################################
+# =====================================
 
 class BaseConfig:
     """
@@ -37,25 +37,27 @@ class BaseConfig:
     # ---------------------------
     # SQLALCHEMY CONFIG
     # ---------------------------
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(basedir, 'database.db')}"
+    basedir = os.path.abspath(os.path.dirname(__file__)) # where config.py lives
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 class DevelopmentConfig(BaseConfig):
     DEBUG = True
     SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_hex(32)
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BaseConfig.basedir, 'database.db')}" # store file in same folder as config.py
 
 
 class TestingConfig(BaseConfig):
     DEBUG = True
     TESTING = True
     SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_hex(32)
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BaseConfig.basedir, 'testing.db')}" # store file in same folder as config.py
 
 
 class ProductionConfig(BaseConfig):
     DEBUG = False
     SECRET_KEY = os.getenv("SECRET_KEY")
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BaseConfig.basedir, 'prod.db')}" # store file in same folder as config.py
 
 
 config = {

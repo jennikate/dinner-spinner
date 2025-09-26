@@ -4,9 +4,9 @@ create_app().
 
 create_app is in src/__init__.py and does the app config & blueprint registration
 """
-###################################################################################################
+# =====================================
 # Imports
-###################################################################################################
+# =====================================
 
 import logging
 import os
@@ -14,11 +14,12 @@ import os
 from dotenv import load_dotenv
 from logging.handlers import RotatingFileHandler
 
-from app import create_app
+from src.app import create_app
+from src.app.config import config
 
-###################################################################################################
+# =====================================
 # Body
-###################################################################################################
+# =====================================
 
 # load variables from .env file into os.environ and overwrite any existing environment variables
 load_dotenv(override=True)
@@ -60,9 +61,13 @@ if __name__ == "__main__":
     debug_env = os.getenv("FLASK_DEBUG", "0").lower()
     debug_mode = debug_env in ("1", "true", "yes")
 
-    app.logger.debug("---------- Starting App ----------")
+    host = "0.0.0.0"
+    port=5000
+
+    print("---------- Starting App ----------")
     app.logger.info(f"Running with config for: {config_level}")
     app.logger.info(f"Running in debug mode? {debug_mode}")
     app.logger.info(f"Log level: {log_level}")
+    app.logger.info(f"Running on http://{host}:{port}")
 
-    app.run(debug=debug_mode, host="0.0.0.0")
+    app.run(debug=debug_mode, host=host, port=port)
