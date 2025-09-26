@@ -1,1 +1,4 @@
-from .recipes import Recipe, IngredientType, Ingredient, Unit, RecipeIngredient
+from .recipes import Recipe
+from .ingredients import Ingredient, IngredientType
+from .units import Unit
+from .recipe_ingredients import RecipeIngredient

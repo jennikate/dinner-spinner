@@ -4,9 +4,9 @@ create_app().
 
 create_app is in src/__init__.py and does the app config & blueprint registration
 """
-###################################################################################################
+# =====================================
 # Imports
-###################################################################################################
+# =====================================
 
 import logging
 import os
@@ -16,9 +16,9 @@ from logging.handlers import RotatingFileHandler
 
 from app import create_app
 
-###################################################################################################
+# =====================================
 # Body
-###################################################################################################
+# =====================================
 
 # load variables from .env file into os.environ and overwrite any existing environment variables
 load_dotenv(override=True)
