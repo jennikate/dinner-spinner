@@ -8,7 +8,7 @@ Tests for the recipe & recipes endpoint resource in the `src.app.routes.v1/recip
 
 import pytest
 
-from src.app.schemas.recipes import BaseRecipeSchema, RecipeResponseSchema
+from src.app.schemas.recipes import RecipeResponseSchema
 
 # =====================================
 #  Body
