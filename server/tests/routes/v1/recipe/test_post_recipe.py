@@ -17,7 +17,7 @@ class TestPostRecipe:
         """
         Tests only the required fields are sent.
         """
-        response = client.post("/v1/recipe", json=base_recipe)
+        response = client.post("/v1/recipes", json=base_recipe)
         data = response.get_json()
 
         expected_response = {
@@ -39,7 +39,7 @@ class TestPostRecipe:
             "notes": "I wrote some notes"
         }
 
-        response = client.post("/v1/recipe", json=new_recipe)
+        response = client.post("/v1/recipes", json=new_recipe)
         data = response.get_json()
 
         expected_response = {
@@ -69,7 +69,7 @@ class TestPostRecipe:
                 }
             ]
         } 
-        response = client.post("/v1/recipe", json=new_recipe)
+        response = client.post("/v1/recipes", json=new_recipe)
         data = response.get_json()
 
         expected_response = {

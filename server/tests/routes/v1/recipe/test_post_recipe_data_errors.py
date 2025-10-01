@@ -13,7 +13,7 @@ from ....fixtures import base_recipe
 class TestPostRecipeWithErrors:
     def test_post_recipe_missing_fields(self, client):
         payload = {}
-        response = client.post("/v1/recipe", json=payload)
+        response = client.post("/v1/recipes", json=payload)
         data = response.get_json()
 
         expected_response = {
@@ -50,7 +50,7 @@ class TestPostRecipeWithErrors:
             ]
         } 
 
-        response = client.post("/v1/recipe", json=payload)
+        response = client.post("/v1/recipes", json=payload)
         data = response.get_json()
 
         expected_response = {
@@ -109,7 +109,7 @@ class TestPostRecipeWithErrors:
             ]
         } 
 
-        response = client.post("/v1/recipe", json=payload)
+        response = client.post("/v1/recipes", json=payload)
         data = response.get_json()
 
         expected_response = {
@@ -148,7 +148,7 @@ class TestPostRecipeWithErrors:
             ]
         } 
         
-        response = client.post("/v1/recipe", json=payload)
+        response = client.post("/v1/recipes", json=payload)
         data = response.get_json()
 
         expected_response = {
@@ -182,7 +182,7 @@ class TestPostRecipeWithErrors:
             **base_recipe,
             "recipe_name": "Beef burgers with side salad and coleslaw, Beef burgers with side salad and coleslaw"
         }
-        response = client.post("/v1/recipe", json=new_recipe)
+        response = client.post("/v1/recipes", json=new_recipe)
         data = response.get_json()
 
         expected_response = {
@@ -206,7 +206,7 @@ class TestPostRecipeWithErrors:
             **base_recipe,
             "recipe_name": ""
         }
-        response = client.post("/v1/recipe", json=new_recipe)
+        response = client.post("/v1/recipes", json=new_recipe)
         data = response.get_json()
 
         expected_response = {
@@ -228,7 +228,7 @@ class TestPostRecipeWithErrors:
 @pytest.mark.usefixtures("seeded_recipes")
 class TestPostRecipeWhenExists:
     def test_post_recipe_already_exists(self, client, base_recipe):
-        response = client.post("/v1/recipe", json=base_recipe)
+        response = client.post("/v1/recipes", json=base_recipe)
         data = response.get_json()
 
         expected_response = {

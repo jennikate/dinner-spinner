@@ -28,7 +28,8 @@ class InstructionSchema(Schema):
     step_number = fields.Int(required=True)
     instruction = fields.Str(required=True)
 
-class RecipeSchema(Schema):
+
+class BaseRecipeSchema(Schema):
     id = fields.UUID(dump_only=True)
     recipe_name = fields.Str(
         required=True, 
@@ -54,7 +55,7 @@ class RecipeSchema(Schema):
 
     # validates_schema runs after all fields are deserialized, so instructions can be a nested list safely.
     @validates_schema
-    def validate_unique_recipe_name(self, data, **kwargs):
+    def validate_recipe_name(self, data, **kwargs):
         """
         Ensure recipe_name is valid and unique in SQLite.
         """
@@ -76,3 +77,13 @@ class RecipeSchema(Schema):
                 f"There is already a recipe with name: {name}.", field_name="recipe_name"
             )
             # field_name="recipe_name" attaches the error to the correct field in the Marshmallow error response.
+
+
+class RecipeResponseSchema(BaseRecipeSchema):
+    class Meta:
+        model = Recipe
+        load_instance = True 
+        # return an SQLAlchemy model instance instead of a plain dictionary
+        # So when I deserialize JSON with this schema, give me a Recipe object, not a Python dict.
+
+        
