@@ -24,7 +24,7 @@ class TestPostRecipeWithDbErrors:
             client=client,
             monkeypatch=monkeypatch,
             method="post",
-            endpoint="/v1/recipe",
+            endpoint="/v1/recipes",
             payload=base_recipe
         )
 
@@ -37,7 +37,7 @@ class TestPostRecipeWithDbErrors:
             client=client,
             monkeypatch=monkeypatch,
             method="post",
-            endpoint="/v1/recipe",
+            endpoint="/v1/recipes",
             payload=base_recipe
         )
 

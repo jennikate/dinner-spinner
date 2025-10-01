@@ -27,4 +27,3 @@ def base_recipe():
         ]
     } 
     return new_recipe
-

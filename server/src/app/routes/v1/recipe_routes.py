@@ -1,7 +1,7 @@
 """
 flask-smorest endpoints.
 
-/recipe
+/recipes
 - POST a new recipe
 - GET one or all recipes
 - PATCH a recipe
@@ -15,11 +15,13 @@ flask-smorest endpoints.
 from flask import current_app
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
+from sqlalchemy import asc
 from sqlalchemy.exc import SQLAlchemyError # to catch db errors
+from uuid import UUID
 
 from ...extensions import db
 from ...models.recipes import Recipe
-from ...schemas.recipes import RecipeSchema
+from ...schemas.recipes import BaseRecipeSchema, RecipeResponseSchema
 
 # =====================================
 #  Body
@@ -28,10 +30,10 @@ from ...schemas.recipes import RecipeSchema
 blp = Blueprint("recipe", __name__, url_prefix="/v1", description="Operations on recipes")
 
 
-@blp.route("/recipe")
+@blp.route("/recipes")
 class RecipeResource(MethodView):
-    @blp.arguments(RecipeSchema)
-    @blp.response(201, RecipeSchema)
+    @blp.arguments(BaseRecipeSchema)
+    @blp.response(201, BaseRecipeSchema)
     def post(self, new_data):
         """
         Add a new recipe
@@ -58,5 +60,55 @@ class RecipeResource(MethodView):
         current_app.logger.debug(f"Recipe added: {recipe}")
 
         current_app.logger.debug("---------- Finished Post Recipe ----------")
+        return recipe
+
+
+@blp.route("/recipes")
+class RecipeResource(MethodView):
+    # @blp.arguments(RecipeArgsSchema, location="query") -> will be used for tags
+    @blp.response(200, RecipeResponseSchema(many=True))
+    def get(self):
+        """
+        Get recipes
+        """
+        current_app.logger.debug("---------- Starting Get Recipes ----------")
+        # current_app.logger.debug(f"Getting jobs with args: {args}")
+
+        # create the base query in lazy state (hasn't hit db yet)
+        # this allows us to conditionally add filters to it
+        # before running
+        # No SQL is sent to the database until you call something like .all(), .first(), .count(), etc.
+        query = Recipe.query
+
+        # Apply default sort by name
+        recipes = query.order_by(Recipe.recipe_name.asc()).all()
+        current_app.logger.debug(f"Number recipes retrieved: {len(recipes)}")
+        current_app.logger.debug(f"Recipes retrieved: {recipes}")
+        
+        current_app.logger.debug("---------- Finished Get Recipes ----------")
+        return recipes
+    
+@blp.route("/recipes/<recipe_id>")
+class RecipeResource(MethodView):
+    @blp.response(200, RecipeResponseSchema)
+    def get(self, recipe_id):
+        """
+        Get recipe by id
+        """
+        current_app.logger.debug("---------- Starting Get Recipes by ID ----------")
+        current_app.logger.debug(f"Getting jobs with id: {recipe_id}")
+
+        try:
+            recipe_uuid = UUID(recipe_id)  # converts string to UUID object
+        except ValueError:
+            abort(400, message="Invalid recipe id")
+
+        recipe = db.session.get(Recipe, recipe_uuid)
+        if not recipe:
+            abort(404, message="Recipe not found")
+
+        current_app.logger.debug(f"Recipe retrieved: {recipe}")
+        
+        current_app.logger.debug("---------- Finished Get Recipes by ID ----------")
         return recipe
     
