@@ -21,7 +21,7 @@ from uuid import UUID
 
 from ...extensions import db
 from ...models.recipes import Recipe
-from ...schemas.recipes import BaseRecipeSchema, RecipeResponseSchema
+from ...schemas.recipes import BaseRecipeSchema, MessageSchema, RecipeResponseSchema
 
 # =====================================
 #  Body
@@ -112,3 +112,36 @@ class RecipeResource(MethodView):
         current_app.logger.debug("---------- Finished Get Recipes by ID ----------")
         return recipe
     
+    @blp.response(200, MessageSchema)
+    def delete(self, recipe_id):
+        """
+        Delete recipe
+        """
+        current_app.logger.debug("---------- Starting Delete Recipes by ID ----------")
+        current_app.logger.debug(f"Getting jobs with id: {recipe_id}")
+
+        try:
+            recipe_uuid = UUID(recipe_id)
+        except ValueError:
+            abort(400, message="Invalid recipe id")
+
+        recipe = db.session.get(Recipe, recipe_uuid)
+        if not recipe:
+            abort(404, message="Recipe not found")
+
+        try:
+            db.session.delete(recipe)
+            db.session.commit()
+        except SQLAlchemyError as sqle:
+            db.session.rollback()
+            current_app.logger.error(f"SQLAlchemyError writing to db: {str(sqle)}")
+            abort(500, message=f"An error occurred writing to the db")
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Exception writing to db: {str(e)}")
+            abort(500, message=f"An error occurred writing to the db")
+
+        current_app.logger.debug(f"Recipe deleted: {recipe_id}")
+        
+        current_app.logger.debug("---------- Finished Delete Recipes by ID ----------")
+        return { "message": f"recipe id {recipe_id} deleted" }, 200

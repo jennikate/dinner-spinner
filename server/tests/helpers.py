@@ -31,7 +31,9 @@ def call_endpoint(client, endpoint, method, payload):
 # DB ERRORS
 # --------------------
 
-def assert_sqlalchemy_error(client, monkeypatch, endpoint, method, payload):
+def assert_sqlalchemy_error(*, client, monkeypatch, endpoint, method, payload=None):
+        # * makes all following args mandatory UNLESS you include =None
+        # so here only payload is optional
         """
         Asserts a 500 response with a message is returned if an SQLAlchemy error is raised
         """
@@ -40,13 +42,13 @@ def assert_sqlalchemy_error(client, monkeypatch, endpoint, method, payload):
             raise SQLAlchemyError("DB error")
 
         monkeypatch.setattr(_db.session, "commit", bad_commit)
-        response = call_endpoint( client=client, endpoint=endpoint, method=method, payload=payload)
+        response = call_endpoint(client=client, endpoint=endpoint, method=method, payload=payload)
 
         assert response.status_code == 500
         data = response.get_json()
         assert "An error occurred writing to the db" in data["message"]
 
-def assert_generic_error(client, monkeypatch, endpoint, method, payload):
+def assert_generic_error(*, client, monkeypatch, endpoint, method, payload=None):
         """
         Tests that a 500 response with a message if a GenericError is raised
         """
@@ -54,7 +56,7 @@ def assert_generic_error(client, monkeypatch, endpoint, method, payload):
             raise RuntimeError("Something went wrong!")
 
         monkeypatch.setattr(_db.session, "commit", bad_commit)
-        response = call_endpoint( client=client, endpoint=endpoint, method=method, payload=payload)
+        response = call_endpoint(client=client, endpoint=endpoint, method=method, payload=payload)
         
         assert response.status_code == 500
         data = response.get_json()
