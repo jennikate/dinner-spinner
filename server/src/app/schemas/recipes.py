@@ -6,6 +6,7 @@ This defines the Marshmallow schemas for recipes for the API.
 # =====================================
 
 from marshmallow import Schema, ValidationError, fields, validates, validates_schema
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from sqlalchemy import select
 
 from ..extensions import db as _db
@@ -29,7 +30,13 @@ class InstructionSchema(Schema):
     instruction = fields.Str(required=True)
 
 
-class BaseRecipeSchema(Schema):
+class BaseRecipeSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Recipe
+        load_instance = True
+        include_fk = True  # there are fks
+        sqla_session = _db.session  # Pass your SQLAlchemy session
+
     id = fields.UUID(dump_only=True)
     recipe_name = fields.Str(
         required=True, 
@@ -57,7 +64,7 @@ class BaseRecipeSchema(Schema):
     @validates_schema
     def validate_recipe_name(self, data, **kwargs):
         """
-        Ensure recipe_name is valid and unique in SQLite.
+        Ensure recipe_name is valid.
         """
         name = data.get("recipe_name")
         if not name.strip():
@@ -66,6 +73,14 @@ class BaseRecipeSchema(Schema):
         if len(name) > 64:
             raise ValidationError("recipe_name must not exceed 64 characters.")
 
+        
+class RecipeCreateSchema(BaseRecipeSchema):
+    @validates_schema
+    def validate_unique_name(self, data, **kwargs):
+        """
+        Ensure recipe_name is unique in SQLite.
+        """
+        name = data.get("recipe_name")
         exists_flag = _db.session.query(
             _db.session.query(Recipe)
             .filter(Recipe.recipe_name.ilike(name))  # ilike() ensures case-insensitive comparison in SQLite
@@ -78,7 +93,7 @@ class BaseRecipeSchema(Schema):
             )
             # field_name="recipe_name" attaches the error to the correct field in the Marshmallow error response.
 
-
+    
 class RecipeResponseSchema(BaseRecipeSchema):
     class Meta:
         model = Recipe
@@ -86,4 +101,25 @@ class RecipeResponseSchema(BaseRecipeSchema):
         # return an SQLAlchemy model instance instead of a plain dictionary
         # So when I deserialize JSON with this schema, give me a Recipe object, not a Python dict.
 
+
+class RecipeUpdateSchema(BaseRecipeSchema):
+    @validates_schema
+    def validate_unique_name(self, data, **kwargs):
+        """
+        Allow keeping the same name for the recipe being updated,
+        but reject if another recipe has the same name.
+        """
+        name = data.get("recipe_name")
+        current_id = self.context.get("recipe_id")  # pass this from endpoint
+        exists_flag = _db.session.query(
+            _db.session.query(Recipe)
+            .filter(Recipe.recipe_name.ilike(name))
+            .filter(Recipe.id != current_id)
+            .exists()
+        ).scalar()
+
+        if exists_flag:
+            raise ValidationError(
+                f"There is already a recipe with name: {name}.", field_name="recipe_name"
+            )
         
