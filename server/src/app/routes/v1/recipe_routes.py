@@ -126,7 +126,7 @@ class RecipeResource(MethodView):
         except ValueError:
             abort(400, message="Invalid recipe id")
 
-        recipe = Recipe.query.get(recipe_uuid)
+        recipe = db.session.get(Recipe, recipe_uuid)
         if not recipe:
             abort(404, message="Recipe not found")
 

@@ -21,6 +21,7 @@ def assert_recipe_update(client, expected_response, recipe_id, updated_recipe, e
     """
     Reusable helper to assert that updating a recipe works as expected.
     """
+    print(f"updated_recipe -> {updated_recipe}")
     # Get the original recipe
     original_response = client.get(f"/v1/recipes/{recipe_id}")
     original_data = original_response.get_json()
@@ -30,6 +31,7 @@ def assert_recipe_update(client, expected_response, recipe_id, updated_recipe, e
 
     # Perform the update
     update_response = client.put(f"/v1/recipes/{recipe_id}", json=updated_recipe)
+    print(f"update_response -> {update_response.get_json()}")
 
     # Assert put code and response
     assert update_response.status_code == expected_status
@@ -69,6 +71,9 @@ def assert_sqlalchemy_error(*, client, monkeypatch, endpoint, method, payload=No
         # Monkeypatch db.session.commit to raise SQLAlchemyError
         def bad_commit():
             raise SQLAlchemyError("DB error")
+        
+        print(f"payload -> {payload}")
+        print(f"method -> {method}")
 
         monkeypatch.setattr(_db.session, "commit", bad_commit)
         response = call_endpoint(client=client, endpoint=endpoint, method=method, payload=payload)

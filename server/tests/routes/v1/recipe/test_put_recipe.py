@@ -51,18 +51,16 @@ class TestPutRecipe:
 
     def test_put_recipe_change_name(self, client, seeded_recipes):
         recipe = seeded_recipes[0]
-        instructions_list = json.loads(recipe.instructions)
-
         updated_recipe = {
             "recipe_name": "My updated simple recipe name",
-            "instructions": instructions_list,
-            "notes": recipe.notes
+            "instructions": recipe.instructions,
+            "notes": recipe.notes or ""
         }
 
         expected_put_response = {
             "id": str(recipe.id),
-            "instructions": instructions_list,
-            "notes": recipe.notes,
+            "instructions": recipe.instructions,
+            "notes": recipe.notes or "",
             "recipe_name": "My updated simple recipe name"
         }
 
@@ -77,19 +75,18 @@ class TestPutRecipe:
 
     def test_put_recipe_change_note(self, client, seeded_recipes):
         recipe = seeded_recipes[0]
-        instructions_list = json.loads(recipe.instructions)
 
         updated_recipe = {
-            "recipe_name": recipe.name,
-            "instructions": instructions_list,
+            "recipe_name": recipe.recipe_name,
+            "instructions": recipe.instructions,
             "notes": "Adding a note now"
         }
 
         expected_put_response = {
             "id": str(recipe.id),
-            "instructions": instructions_list,
+            "instructions": recipe.instructions,
             "notes": "Adding a note now",
-            "recipe_name": recipe.name
+            "recipe_name": recipe.recipe_name
         }
 
         assert_recipe_update(
@@ -105,12 +102,12 @@ class TestPutRecipe:
         recipe = seeded_recipes[0]
 
         updated_recipe = {
-            "recipe_name": recipe.name,
+            "recipe_name": recipe.recipe_name,
             "instructions": [
                 {"step_number": 1,"instruction": "Step one do things"},
                 {"step_number": 2,"instruction": "Step two do other things"}
             ],
-            "notes": recipe.notes
+            "notes": recipe.notes or ""
         }
 
         expected_put_response = {
