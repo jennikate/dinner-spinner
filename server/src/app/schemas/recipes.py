@@ -5,9 +5,7 @@ This defines the Marshmallow schemas for recipes for the API.
 # Imports
 # =====================================
 
-from marshmallow import Schema, ValidationError, fields, validates, validates_schema
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
-from sqlalchemy import select
+from marshmallow import Schema, ValidationError, fields, validates_schema
 
 from ..extensions import db as _db
 from ..models.recipes import Recipe
@@ -30,12 +28,11 @@ class InstructionSchema(Schema):
     instruction = fields.Str(required=True)
 
 
-class BaseRecipeSchema(SQLAlchemyAutoSchema):
+class BaseRecipeSchema(Schema):
     class Meta:
         model = Recipe
         load_instance = True
         include_fk = True  # there are fks
-        sqla_session = _db.session  # Pass your SQLAlchemy session
 
     id = fields.UUID(dump_only=True)
     recipe_name = fields.Str(
@@ -73,6 +70,21 @@ class BaseRecipeSchema(SQLAlchemyAutoSchema):
         if len(name) > 64:
             raise ValidationError("recipe_name must not exceed 64 characters.")
 
+    # def validate_instructions(self, data, **kwargs):
+    #     instructions = data.get("instructions", [])
+    #     if not instructions:
+    #         raise ValidationError("Instructions cannot be empty", "instructions")
+
+    #     expected_step = 1
+    #     for instr in instructions:
+    #         if instr["step_number"] != expected_step:
+    #             raise ValidationError(
+    #                 f"Step numbers must start at 1 and increment by 1. Found {instr['step_number']}",
+    #                 "instructions"
+    #             )
+    #         if not instr["instruction"].strip():
+    #             raise ValidationError("Instruction text cannot be empty", "instructions")
+    #         expected_step += 1
         
 class RecipeCreateSchema(BaseRecipeSchema):
     @validates_schema
@@ -103,23 +115,7 @@ class RecipeResponseSchema(BaseRecipeSchema):
 
 
 class RecipeUpdateSchema(BaseRecipeSchema):
-    @validates_schema
-    def validate_unique_name(self, data, **kwargs):
-        """
-        Allow keeping the same name for the recipe being updated,
-        but reject if another recipe has the same name.
-        """
-        name = data.get("recipe_name")
-        current_id = self.context.get("recipe_id")  # pass this from endpoint
-        exists_flag = _db.session.query(
-            _db.session.query(Recipe)
-            .filter(Recipe.recipe_name.ilike(name))
-            .filter(Recipe.id != current_id)
-            .exists()
-        ).scalar()
-
-        if exists_flag:
-            raise ValidationError(
-                f"There is already a recipe with name: {name}.", field_name="recipe_name"
-            )
+    class Meta:
+        model = Recipe
+        load_instance = True 
         

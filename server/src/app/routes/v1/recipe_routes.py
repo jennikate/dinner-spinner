@@ -21,7 +21,7 @@ from uuid import UUID
 
 from ...extensions import db
 from ...models.recipes import Recipe
-from ...schemas.recipes import BaseRecipeSchema, MessageSchema, RecipeResponseSchema, RecipeUpdateSchema
+from ...schemas.recipes import BaseRecipeSchema, MessageSchema, RecipeCreateSchema, RecipeResponseSchema, RecipeUpdateSchema
 
 # =====================================
 #  Body
@@ -32,8 +32,8 @@ blp = Blueprint("recipe", __name__, url_prefix="/v1", description="Operations on
 
 @blp.route("/recipes")
 class RecipeResource(MethodView):
-    @blp.arguments(BaseRecipeSchema)
-    @blp.response(201, BaseRecipeSchema)
+    @blp.arguments(RecipeCreateSchema)
+    @blp.response(201, RecipeResponseSchema)
     def post(self, new_data):
         """
         Add a new recipe
@@ -111,7 +111,7 @@ class RecipeResource(MethodView):
         return recipe
     
 
-    @blp.arguments(BaseRecipeSchema)
+    @blp.arguments(RecipeUpdateSchema)
     @blp.response(200, RecipeResponseSchema)
     def put(self, update_data, recipe_id):
         """
@@ -126,20 +126,15 @@ class RecipeResource(MethodView):
         except ValueError:
             abort(400, message="Invalid recipe id")
 
-        recipe = db.session.get(Recipe, recipe_uuid)
+        recipe = Recipe.query.get(recipe_uuid)
         if not recipe:
             abort(404, message="Recipe not found")
 
-        # Pass current recipe_id to schema context for validation
-        schema = RecipeUpdateSchema(context={"recipe_id": recipe_id})
-        validated_data = schema.load(update_data)  # runs all validations
+        # Update recipe fields
+        for key, value in update_data.items(): # .items accesses the entries in the dict
+            setattr(recipe, key, value)
 
         try:
-            # validation is set on the schema and run via the 
-            # @blp.arguements command, erroring out before
-            # code reaches here
-            recipe = Recipe(**validated_data)
-            db.session.add(recipe)
             db.session.commit()
         except SQLAlchemyError as sqle:
             db.session.rollback()
