@@ -15,7 +15,7 @@ flask-smorest endpoints.
 from flask import current_app
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
-from sqlalchemy import asc
+from sqlalchemy import asc, exists
 from sqlalchemy.exc import SQLAlchemyError # to catch db errors
 from uuid import UUID
 
@@ -130,7 +130,18 @@ class RecipeResource(MethodView):
         if not recipe:
             abort(404, message="Recipe not found")
 
-        # Update recipe fields
+        # if recipe name changed, check that name does not already exist on another recipe
+        new_name = update_data.get("recipe_name")
+        if new_name and new_name != recipe.recipe_name:
+            name_taken = db.session.query(
+                exists().where(Recipe.recipe_name == new_name)
+            ).scalar()
+            # scalar -> returns the first column of the first row from the query result.
+            # if no rows are found, it returns None.
+            if name_taken:
+                abort(400, message="Recipe name already in use, name must be unique")
+
+        # If no aborts, then update all recipe fields
         for key, value in update_data.items(): # .items accesses the entries in the dict
             setattr(recipe, key, value)
 
@@ -151,7 +162,6 @@ class RecipeResource(MethodView):
         return recipe
         
 
-    
     @blp.response(200, MessageSchema)
     def delete(self, recipe_id):
         """

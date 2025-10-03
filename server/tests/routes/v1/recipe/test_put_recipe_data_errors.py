@@ -243,27 +243,26 @@ class TestPutRecipe:
         
     
     
-        # def test_put_recipe_by_id_duplicate_name(self, client, seeded_recipes):
-    #     # It needs a valid payload as that is checked before we check the uuid exists
-    #     recipe = seeded_recipes[0] # recipe to update
-    #     recipe_two = seeded_recipes[1] # recipe to use existing name of
-    #     updated_recipe = {
-    #         "recipe_name": recipe_two.recipe_name, # apply the same name as another recipe
-    #         "instructions": recipe.instructions,
-    #         "notes": recipe.notes
-    #     }
+    def test_put_recipe_by_id_duplicate_name(self, client, seeded_recipes):
+        recipe = seeded_recipes[0] # recipe to update
+        recipe_two = seeded_recipes[1] # recipe to use existing name of
+        updated_recipe = {
+            "recipe_name": recipe_two.recipe_name, # apply the same name as another recipe
+            "instructions": recipe.instructions,
+            "notes": recipe.notes
+        }
 
-    #     expected_response =  {
-    #         "code": 400,
-    #         "message": "Recipe name already in use, name must be unique",
-    #         "status": "Bad Request"
-    #     }
+        expected_response =  {
+            "code": 400,
+            "message": "Recipe name already in use, name must be unique",
+            "status": "Bad Request"
+        }
 
-    #     assert_recipe_update(
-    #         client=client, 
-    #         expected_response=expected_response, 
-    #         recipe_id=str(recipe.id), 
-    #         updated_recipe=updated_recipe, 
-    #         expected_status = 400
-    #     )
+        assert_recipe_update(
+            client=client, 
+            expected_response=expected_response, 
+            recipe_id=str(recipe.id), 
+            updated_recipe=updated_recipe, 
+            expected_status = 400
+        )
 
