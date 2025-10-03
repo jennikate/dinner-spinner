@@ -130,3 +130,6 @@ class RecipeUpdateSchema(BaseRecipeSchema):
         load_instance = True 
 
         
+class RecipeQuerySchema(Schema):
+    page = fields.Int(load_default=1)      # used if page is not in request
+    per_page = fields.Int(load_default=1) # used if per_page is not in request

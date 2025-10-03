@@ -12,7 +12,7 @@ flask-smorest endpoints.
 #  Imports
 # =====================================
 
-from flask import current_app
+from flask import current_app, jsonify
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from sqlalchemy import asc, exists
@@ -21,7 +21,11 @@ from uuid import UUID
 
 from ...extensions import db
 from ...models.recipes import Recipe
-from ...schemas.recipes import BaseRecipeSchema, MessageSchema, RecipeCreateSchema, RecipeResponseSchema, RecipeUpdateSchema
+from ...schemas.recipes import MessageSchema, RecipeCreateSchema, RecipeQuerySchema, RecipeResponseSchema, RecipeUpdateSchema
+
+# For manually doing pagination without smorest see this helper function
+# currently am using smorest but keeping function for reference on how it works
+from ...utils.paginate import paginate_query
 
 # =====================================
 #  Body
@@ -63,28 +67,35 @@ class RecipeResource(MethodView):
         return recipe
 
 
-    # @blp.arguments(RecipeArgsSchema, location="query") -> will be used for tags
+    @blp.arguments(RecipeQuerySchema, location="query")
     @blp.response(200, RecipeResponseSchema(many=True))
-    def get(self):
+    # @blp.paginate() # used if letting smorest handle pagination
+    def get(self, args):
         """
         Get recipes
         """
         current_app.logger.debug("---------- Starting Get Recipes ----------")
-        # current_app.logger.debug(f"Getting jobs with args: {args}")
+        current_app.logger.debug(f"Getting jobs with args: {args}")
 
-        # create the base query in lazy state (hasn't hit db yet)
-        # this allows us to conditionally add filters to it
-        # before running
-        # No SQL is sent to the database until you call something like .all(), .first(), .count(), etc.
-        query = Recipe.query
+        # extract pagination args
+        page = int(args.get("page", 1)) # default to 1 if nothing provided
+        current_app.logger.debug(f"Page -> {page}")
+        per_page = int(args.get("per_page", 10)) # default to 10 if nothing provided
 
-        # Apply default sort by name
-        recipes = query.order_by(Recipe.recipe_name.asc()).all()
-        current_app.logger.debug(f"Number recipes retrieved: {len(recipes)}")
-        current_app.logger.debug(f"Recipes retrieved: {recipes}")
+        paginated_results = paginate_query(
+            Recipe.query,
+            page=page,
+            per_page=per_page,
+            order_by=Recipe.recipe_name.asc()  # default sort
+        )
+
+        current_app.logger.debug(f"Number recipes retrieved: {len(paginated_results)}")
+        current_app.logger.debug(f"Recipes retrieved: {paginated_results}")
         
         current_app.logger.debug("---------- Finished Get Recipes ----------")
-        return recipes
+        return jsonify(paginated_results)
+        # change back to paginated_results when I move to smorest for pagination
+
     
 @blp.route("/recipes/<recipe_id>")
 class RecipeResource(MethodView):
