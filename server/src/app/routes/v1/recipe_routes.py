@@ -4,7 +4,7 @@ flask-smorest endpoints.
 /recipes
 - POST a new recipe
 - GET one or all recipes
-- PATCH a recipe
+- PUT a recipe
 - DELETE a recipe
 """
 
@@ -15,13 +15,13 @@ flask-smorest endpoints.
 from flask import current_app
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
-from sqlalchemy import asc
+from sqlalchemy import asc, exists
 from sqlalchemy.exc import SQLAlchemyError # to catch db errors
 from uuid import UUID
 
 from ...extensions import db
 from ...models.recipes import Recipe
-from ...schemas.recipes import BaseRecipeSchema, MessageSchema, RecipeResponseSchema
+from ...schemas.recipes import BaseRecipeSchema, MessageSchema, RecipeCreateSchema, RecipeResponseSchema, RecipeUpdateSchema
 
 # =====================================
 #  Body
@@ -32,8 +32,8 @@ blp = Blueprint("recipe", __name__, url_prefix="/v1", description="Operations on
 
 @blp.route("/recipes")
 class RecipeResource(MethodView):
-    @blp.arguments(BaseRecipeSchema)
-    @blp.response(201, BaseRecipeSchema)
+    @blp.arguments(RecipeCreateSchema)
+    @blp.response(201, RecipeResponseSchema)
     def post(self, new_data):
         """
         Add a new recipe
@@ -63,8 +63,6 @@ class RecipeResource(MethodView):
         return recipe
 
 
-@blp.route("/recipes")
-class RecipeResource(MethodView):
     # @blp.arguments(RecipeArgsSchema, location="query") -> will be used for tags
     @blp.response(200, RecipeResponseSchema(many=True))
     def get(self):
@@ -96,7 +94,7 @@ class RecipeResource(MethodView):
         Get recipe by id
         """
         current_app.logger.debug("---------- Starting Get Recipes by ID ----------")
-        current_app.logger.debug(f"Getting jobs with id: {recipe_id}")
+        current_app.logger.debug(f"Getting recipe with id: {recipe_id}")
 
         try:
             recipe_uuid = UUID(recipe_id)  # converts string to UUID object
@@ -112,6 +110,58 @@ class RecipeResource(MethodView):
         current_app.logger.debug("---------- Finished Get Recipes by ID ----------")
         return recipe
     
+
+    @blp.arguments(RecipeUpdateSchema)
+    @blp.response(200, RecipeResponseSchema)
+    def put(self, update_data, recipe_id):
+        """
+        Update recipe by id
+        """
+        current_app.logger.debug("---------- Starting Put Recipes by ID ----------")
+        current_app.logger.debug(f"Updating recipe id: {recipe_id}")
+        current_app.logger.debug(f"Updating recipe with: {update_data}")
+
+        try:
+            recipe_uuid = UUID(recipe_id)  # converts string to UUID object
+        except ValueError:
+            abort(400, message="Invalid recipe id")
+
+        recipe = db.session.get(Recipe, recipe_uuid)
+        if not recipe:
+            abort(404, message="Recipe not found")
+
+        # if recipe name changed, check that name does not already exist on another recipe
+        new_name = update_data.get("recipe_name")
+        if new_name and new_name != recipe.recipe_name:
+            name_taken = db.session.query(
+                exists().where(Recipe.recipe_name == new_name)
+            ).scalar()
+            # scalar -> returns the first column of the first row from the query result.
+            # if no rows are found, it returns None.
+            if name_taken:
+                abort(400, message="Recipe name already in use, name must be unique")
+
+        # If no aborts, then update all recipe fields
+        for key, value in update_data.items(): # .items accesses the entries in the dict
+            setattr(recipe, key, value)
+
+        try:
+            db.session.commit()
+        except SQLAlchemyError as sqle:
+            db.session.rollback()
+            current_app.logger.error(f"SQLAlchemyError writing to db: {str(sqle)}")
+            abort(500, message=f"An error occurred writing to the db")
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Exception writing to db: {str(e)}")
+            abort(500, message=f"An error occurred writing to the db")
+
+        current_app.logger.debug(f"Recipe added: {recipe}")
+        current_app.logger.debug("---------- Finished Put Recipes by ID ----------")
+        
+        return recipe
+        
+
     @blp.response(200, MessageSchema)
     def delete(self, recipe_id):
         """

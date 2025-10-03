@@ -9,6 +9,7 @@ Tests for the recipe & recipes endpoint resource in the `src.app.routes.v1/recip
 import pytest
 
 from src.app.extensions import db as _db
+from ....fixtures import base_recipe
 from ....helpers import assert_generic_error, assert_sqlalchemy_error
 
 # =====================================
@@ -16,8 +17,8 @@ from ....helpers import assert_generic_error, assert_sqlalchemy_error
 # =====================================
 
 @pytest.mark.usefixtures("seeded_recipes")
-class TestDeleteRecipeWithDbErrors:
-    def test_delete_recipe_sqlalchemy_error(self, client, monkeypatch, seeded_recipes):
+class TestPutRecipeWithDbErrors:
+    def test_put_recipe_sqlalchemy_error(self, client, monkeypatch, base_recipe, seeded_recipes):
         """
         Tests a 500 response with a message is returned if an SQLAlchemy error is raised
         """
@@ -26,12 +27,13 @@ class TestDeleteRecipeWithDbErrors:
         assert_sqlalchemy_error(
             client=client,
             monkeypatch=monkeypatch,
-            method="delete",
-            endpoint=f"/v1/recipes/{recipe_id}"
+            method="put",
+            endpoint=f"/v1/recipes/{recipe_id}",
+            payload = base_recipe
         )
 
     
-    def test_delete_recipe_generic_error(self, client, monkeypatch, seeded_recipes):
+    def test_put_recipe_generic_error(self, client, monkeypatch, base_recipe, seeded_recipes):
         """
         Tests that a 500 response with a message if a GenericError is raised
         """
@@ -39,6 +41,7 @@ class TestDeleteRecipeWithDbErrors:
         assert_generic_error(
             client=client,
             monkeypatch=monkeypatch,
-            method="delete",
-            endpoint=f"/v1/recipes/{recipe_id}"
+            method="put",
+            endpoint=f"/v1/recipes/{recipe_id}",
+            payload = base_recipe
         )

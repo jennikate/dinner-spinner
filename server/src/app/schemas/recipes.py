@@ -5,8 +5,7 @@ This defines the Marshmallow schemas for recipes for the API.
 # Imports
 # =====================================
 
-from marshmallow import Schema, ValidationError, fields, validates, validates_schema
-from sqlalchemy import select
+from marshmallow import Schema, ValidationError, fields, validates_schema
 
 from ..extensions import db as _db
 from ..models.recipes import Recipe
@@ -30,6 +29,11 @@ class InstructionSchema(Schema):
 
 
 class BaseRecipeSchema(Schema):
+    class Meta:
+        model = Recipe
+        load_instance = True
+        include_fk = True  # there are fks
+
     id = fields.UUID(dump_only=True)
     recipe_name = fields.Str(
         required=True, 
@@ -47,6 +51,8 @@ class BaseRecipeSchema(Schema):
         }
     )  # accepts any JSON object
     notes = fields.Str(
+        required=False,
+        allow_none=True,
         metadata={
             "description": "The name of the recipe", 
             "example": "Beef Goulash"
@@ -57,7 +63,7 @@ class BaseRecipeSchema(Schema):
     @validates_schema
     def validate_recipe_name(self, data, **kwargs):
         """
-        Ensure recipe_name is valid and unique in SQLite.
+        Ensure recipe_name is valid.
         """
         name = data.get("recipe_name")
         if not name.strip():
@@ -66,6 +72,29 @@ class BaseRecipeSchema(Schema):
         if len(name) > 64:
             raise ValidationError("recipe_name must not exceed 64 characters.")
 
+    # def validate_instructions(self, data, **kwargs):
+    #     instructions = data.get("instructions", [])
+    #     if not instructions:
+    #         raise ValidationError("Instructions cannot be empty", "instructions")
+
+    #     expected_step = 1
+    #     for instr in instructions:
+    #         if instr["step_number"] != expected_step:
+    #             raise ValidationError(
+    #                 f"Step numbers must start at 1 and increment by 1. Found {instr['step_number']}",
+    #                 "instructions"
+    #             )
+    #         if not instr["instruction"].strip():
+    #             raise ValidationError("Instruction text cannot be empty", "instructions")
+    #         expected_step += 1
+        
+class RecipeCreateSchema(BaseRecipeSchema):
+    @validates_schema
+    def validate_unique_name(self, data, **kwargs):
+        """
+        Ensure recipe_name is unique in SQLite.
+        """
+        name = data.get("recipe_name")
         exists_flag = _db.session.query(
             _db.session.query(Recipe)
             .filter(Recipe.recipe_name.ilike(name))  # ilike() ensures case-insensitive comparison in SQLite
@@ -78,12 +107,26 @@ class BaseRecipeSchema(Schema):
             )
             # field_name="recipe_name" attaches the error to the correct field in the Marshmallow error response.
 
-
+    
 class RecipeResponseSchema(BaseRecipeSchema):
     class Meta:
         model = Recipe
         load_instance = True 
         # return an SQLAlchemy model instance instead of a plain dictionary
         # So when I deserialize JSON with this schema, give me a Recipe object, not a Python dict.
+
+
+class RecipeUpdateSchema(BaseRecipeSchema):
+    """
+    We have a specific update schema to allow a PUT method
+    Where the name can remain the same during an update process
+    As part of update if the update_recipe has a new name
+    We do a validation check in the resource (route/recipe)
+    and reject it if an existing recipe aleady has that name
+    NOTE: for POST method we do the validation in the RecipeCreateSchema
+    """
+    class Meta:
+        model = Recipe
+        load_instance = True 
 
         

@@ -14,15 +14,48 @@ from src.app.extensions import db as _db
 # =====================================
 
 # --------------------
+# UPDATES
+# --------------------
+
+def assert_recipe_update(client, expected_response, recipe_id, updated_recipe, expected_status = 200):
+    """
+    Reusable helper to assert that updating a recipe works as expected.
+    """
+    # Get the original recipe
+    original_response = client.get(f"/v1/recipes/{recipe_id}")
+    original_data = original_response.get_json()
+
+    # Verify that the update actually changes something
+    assert original_data != updated_recipe
+
+    # Perform the update
+    update_response = client.put(f"/v1/recipes/{recipe_id}", json=updated_recipe)
+    print(f"response -> {update_response.get_json()}")
+    print(f"response status -> {update_response.status_code}")
+
+    # Assert put code and response
+    assert update_response.status_code == expected_status
+    assert update_response.get_json() == expected_response
+
+    # get recipe from db
+    if update_response.status_code == 200:
+        updated_response = client.get(f"/v1/recipes/{recipe_id}")
+        updated_data = updated_response.get_json()
+        print(f"db response -> {updated_response}")
+
+        assert updated_data == expected_response
+
+
+# --------------------
 # ENDPOINT
 # --------------------
 
 def call_endpoint(client, endpoint, method, payload):
-    # Dynamically get the method from the client (post, get, patch, etc.)
+    # Dynamically get the method from the client (post, get, put, etc.)
     func = getattr(client, method.lower())
 
     # Decide whether to send payload or not
-    if method.lower() in ["post", "patch", "put"]:
+    if method.lower() in ["post", "put", "put"]:
         return func(endpoint, json=payload)
     else:
         return func(endpoint)
