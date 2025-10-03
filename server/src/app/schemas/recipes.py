@@ -51,6 +51,8 @@ class BaseRecipeSchema(Schema):
         }
     )  # accepts any JSON object
     notes = fields.Str(
+        required=False,
+        allow_none=True,
         metadata={
             "description": "The name of the recipe", 
             "example": "Beef Goulash"
@@ -115,7 +117,16 @@ class RecipeResponseSchema(BaseRecipeSchema):
 
 
 class RecipeUpdateSchema(BaseRecipeSchema):
+    """
+    We have a specific update schema to allow a PUT method
+    Where the name can remain the same during an update process
+    As part of update if the update_recipe has a new name
+    We do a validation check in the resource (route/recipe)
+    and reject it if an existing recipe aleady has that name
+    NOTE: for POST method we do the validation in the RecipeCreateSchema
+    """
     class Meta:
         model = Recipe
         load_instance = True 
+
         

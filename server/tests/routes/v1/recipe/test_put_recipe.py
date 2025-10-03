@@ -54,13 +54,13 @@ class TestPutRecipe:
         updated_recipe = {
             "recipe_name": "My updated simple recipe name",
             "instructions": recipe.instructions,
-            "notes": recipe.notes or ""
+            "notes": recipe.notes
         }
 
         expected_put_response = {
             "id": str(recipe.id),
             "instructions": recipe.instructions,
-            "notes": recipe.notes or "",
+            "notes": recipe.notes,
             "recipe_name": "My updated simple recipe name"
         }
 
@@ -98,6 +98,31 @@ class TestPutRecipe:
         )
 
     
+    def test_put_recipe_change_note_to_null(self, client, seeded_recipes):
+        recipe = seeded_recipes[1] # has a notes field that is not none
+
+        updated_recipe = {
+            "recipe_name": recipe.recipe_name,
+            "instructions": recipe.instructions,
+            "notes": None
+        }
+
+        expected_put_response = {
+            "id": str(recipe.id),
+            "instructions": recipe.instructions,
+            "notes": None,
+            "recipe_name": recipe.recipe_name
+        }
+
+        assert_recipe_update(
+            client=client, 
+            expected_response=expected_put_response, 
+            recipe_id=str(recipe.id), 
+            updated_recipe=updated_recipe, 
+            expected_status = 200
+        )
+
+    
     def test_put_recipe_change_instruction(self, client, seeded_recipes):
         recipe = seeded_recipes[0]
 
@@ -107,7 +132,7 @@ class TestPutRecipe:
                 {"step_number": 1,"instruction": "Step one do things"},
                 {"step_number": 2,"instruction": "Step two do other things"}
             ],
-            "notes": recipe.notes or ""
+            "notes": recipe.notes
         }
 
         expected_put_response = {
@@ -122,3 +147,29 @@ class TestPutRecipe:
             updated_recipe=updated_recipe, 
             expected_status = 200
         )
+
+    def test_put_recipe_by_id_nothing_changed(self, client, seeded_recipes):
+        """
+        Test that if nothing changes, we still return a 200
+        """
+        recipe = seeded_recipes[0]
+        updated_recipe = {
+            "recipe_name": recipe.recipe_name,
+            "instructions": recipe.instructions,
+            "notes": recipe.notes
+        }
+
+        expected_response =  {
+            "id": str(recipe.id), 
+            "instructions": recipe.instructions, 
+            "notes": recipe.notes,
+            "recipe_name": recipe.recipe_name
+        }
+
+        assert_recipe_update(
+            client=client, 
+            expected_response=expected_response, 
+            recipe_id=str(recipe.id), 
+            updated_recipe=updated_recipe, 
+            expected_status = 200
+        ) 

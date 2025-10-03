@@ -100,7 +100,8 @@ def seeded_recipes(app, db):
             instructions=[
                 {"step_number": 1,"instruction": "First thing you do is"},
                 {"step_number": 2,"instruction": "Second thing you do is"}
-            ]
+            ],
+            notes="My sample note."
         )
     ]
     # Make sure to add recipes within app context
