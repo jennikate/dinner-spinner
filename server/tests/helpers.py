@@ -5,13 +5,49 @@ Common functions used in tests.
 # Imports
 # =====================================
 
+from math import ceil
 from sqlalchemy.exc import SQLAlchemyError
 
+from src.app.constants import MAX_PER_PAGE
 from src.app.extensions import db as _db
+from src.app.models.recipes import Recipe
+
+from .conftest import seeded_recipes
 
 # =====================================
 # Body
 # =====================================
+
+# --------------------
+# PAGINATION
+# --------------------
+
+def get_pagination_counts(app, db, page=1, per_page=MAX_PER_PAGE):
+    """
+    Reusable helper to get pagination counts for recipes."""
+
+    with app.app_context():
+        total_items = Recipe.query.count()
+
+
+    # Enforce max per_page limit
+    items_to_include_per_page = min(per_page, MAX_PER_PAGE)
+
+    # Calculate total pages
+    pages = ceil(total_items / items_to_include_per_page) if total_items else 0
+
+    # Calculate start and end indices for slicing
+    start = (page - 1) * items_to_include_per_page
+    end = start + items_to_include_per_page
+
+    return {
+        "per_page": items_to_include_per_page,
+        "pages": pages,
+        "total_items": total_items,
+        "recipe_number_start": start,
+        "recipe_number_end": end
+    }
+
 
 # --------------------
 # UPDATES

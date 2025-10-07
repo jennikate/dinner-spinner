@@ -10,16 +10,26 @@ import pytest
 
 from src.app.schemas.recipes import RecipeResponseSchema
 
+from ....helpers import get_pagination_counts
+
+
 # =====================================
 #  Body
 # =====================================
 
 class TestGetAllRecipeWhenNoneExist:
-    def test_get_all_recipes_when_none_exist(self, client):
+    def test_get_all_recipes_when_none_exist(self, client, app, db):
+        pagination_counts = get_pagination_counts(app, db)
         response = client.get("/v1/recipes")
         data = response.get_json()
-
-        expected_response = []
+        
+        expected_response = {
+            "items": [], 
+            "page": 1, 
+            "pages": pagination_counts["pages"],
+            "per_page": pagination_counts["per_page"],
+            "total": 0
+        }
 
         assert response.status_code == 200
         assert data == expected_response
@@ -27,7 +37,8 @@ class TestGetAllRecipeWhenNoneExist:
 
 @pytest.mark.usefixtures("seeded_recipes")
 class TestGetRecipe:
-    def test_get_all_recipes(self, client, seeded_recipes):
+    def test_get_all_recipes(self, client, app, db, seeded_recipes):
+        pagination_counts = get_pagination_counts(app, db)
         response = client.get("/v1/recipes")
         data = response.get_json()
 
@@ -40,13 +51,24 @@ class TestGetRecipe:
         schema = RecipeResponseSchema(many=True)
         recipes_data = schema.dump(seeded_recipes)  # list of dicts
 
-        expected_response = [
+        mapped_recipes = [
             {
                 **recipe, # unpack -> list of dicts, one per Recipe object
                 "id": recipe["id"], # UUID is generated
                 "notes": recipe["notes"]
             } for recipe in sorted(recipes_data, key=lambda r: r["recipe_name"])
         ]
+
+        # item slice 
+        # because we've passed nothing to the helper function
+        # the default should -> start at 0, stop at MAX_PER_PAGE -> returns a new list containing the first MAX_PER_PAGE recipes.
+        expected_response = {
+            "items": mapped_recipes[pagination_counts["recipe_number_start"]:pagination_counts["recipe_number_end"]], 
+            "page": 1,
+            "pages": pagination_counts["pages"],
+            "per_page": pagination_counts["per_page"],
+            "total": len(seeded_recipes)
+        }
 
         assert response.status_code == 200
         assert data == expected_response

@@ -15,6 +15,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 
 from src.app import create_app, db as _db # _db to be clear this is the test instance
 from src.app.models.recipes import Recipe 
+from src.app.constants import MAX_PER_PAGE
 
 # =====================================
 # Configuration & setup
@@ -109,3 +110,31 @@ def seeded_recipes(app, db):
         db.session.add_all(recipes)
         db.session.commit()
     return recipes
+
+
+@pytest.fixture
+def large_seeded_recipes(app, db):
+    """
+    Seed the database with 40 recipes for pagination testing.
+    """
+    recipes = []
+
+    for i in range(1, 41):  # 40 recipes
+        recipe = {
+            "recipe_name": f"Recipe {i}",
+            "instructions": [
+                {"step_number": 1, "instruction": f"Step 1 for Recipe {i}"},
+                {"step_number": 2, "instruction": f"Step 2 for Recipe {i}"}
+            ],
+            "notes": f"Sample note for Recipe {i}"
+        }
+        recipes.append(recipe)
+
+    # Insert into database
+    with app.app_context():
+        recipe_objects = [Recipe(**r) for r in recipes]
+        db.session.add_all(recipe_objects)
+        db.session.commit()
+
+    return recipe_objects  # return list of ORM objects for tests
+

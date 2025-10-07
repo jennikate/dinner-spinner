@@ -20,12 +20,12 @@ class TestDeleteRecipe:
         # Get a recipe and verify it exists
         recipe_id = str(seeded_recipes[0].id)
         original_response = client.get(f"/v1/recipes/{recipe_id}")
-        data = original_response.get_json()
+        original_data = original_response.get_json()
 
         expected_original_response = RecipeResponseSchema().dump(seeded_recipes[0])
 
         assert original_response.status_code == 200
-        assert data == expected_original_response
+        assert original_data == expected_original_response
 
         # delete the recipe
         delete_response = client.delete(f"/v1/recipes/{recipe_id}")
@@ -34,5 +34,5 @@ class TestDeleteRecipe:
 
         # verify recipe is no longer there
         new_get_response = client.get("/v1/recipes")
-        assert original_response.get_json() not in new_get_response.get_json()
+        assert original_data["id"] not in new_get_response.get_json()
             

@@ -7,6 +7,7 @@ This defines the Marshmallow schemas for recipes for the API.
 
 from marshmallow import Schema, ValidationError, fields, validates_schema
 
+from ..constants import MAX_PER_PAGE
 from ..extensions import db as _db
 from ..models.recipes import Recipe
 
@@ -17,6 +18,33 @@ from ..models.recipes import Recipe
 
 class MessageSchema(Schema):
     message = fields.String(required=True, metadata={"example": "Item deleted successfully"})
+
+
+class ErrorSchema(Schema):
+    status = fields.Int(
+        required=True, 
+        metadata={
+            "example": 400,
+            "description": "HTTP status code of the error"
+        }
+    )
+    error = fields.Str(
+        required=True,
+        metadata={
+            "example": "Bad Request",
+            "description": "Short error type or reason"
+        }
+    )
+    message = fields.Str(
+        required=True,
+        metadata={
+            "example": "Recipe name already in use",
+            "description": "Detailed explanation of the error"
+        }
+    )
+
+    class Meta:
+        description = "Standard error response schema"
 
 
 # ------------------
@@ -130,3 +158,18 @@ class RecipeUpdateSchema(BaseRecipeSchema):
         load_instance = True 
 
         
+class RecipeQuerySchema(Schema):
+    page = fields.Int(
+        load_default=1, # used if page is not in request
+        metadata={
+            "description§": "Page number for pagination (1-indexed)",
+            "example": 1
+        }
+    )      
+    per_page = fields.Int(
+        load_default=int(MAX_PER_PAGE), # used if per_page is not in request
+        metadata={
+            "description": "Number of results per page",
+            "example": 10
+        }
+    )
