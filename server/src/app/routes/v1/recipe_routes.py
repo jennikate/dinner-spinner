@@ -19,9 +19,10 @@ from sqlalchemy import asc, exists
 from sqlalchemy.exc import SQLAlchemyError # to catch db errors
 from uuid import UUID
 
+from ...constants import MAX_PER_PAGE
 from ...extensions import db
 from ...models.recipes import Recipe
-from ...schemas.recipes import MessageSchema, RecipeCreateSchema, RecipeQuerySchema, RecipeResponseSchema, RecipeUpdateSchema
+from ...schemas.recipes import ErrorSchema, MessageSchema, RecipeCreateSchema, RecipeQuerySchema, RecipeResponseSchema, RecipeUpdateSchema
 
 # For manually doing pagination without smorest see this helper function
 # currently am using smorest but keeping function for reference on how it works
@@ -36,8 +37,28 @@ blp = Blueprint("recipe", __name__, url_prefix="/v1", description="Operations on
 
 @blp.route("/recipes")
 class RecipeResource(MethodView):
-    @blp.arguments(RecipeCreateSchema)
-    @blp.response(201, RecipeResponseSchema)
+    # without () it normally is a class, with () it is an instance of the class
+    # so blp.response(200, RecipeResponseSchema) is passing the class
+    # and that can be fine because Flask-Smorest will try to instantiate it later
+    # and can normalise it to an instance
+    # this also works for @blp.response(201, RecipeResponseSchema)
+    # HOWEVER it does not work when we add @blp.alt_response
+    # because it immediately tries to build the OpenAPI spec entry and call Marshmallow internals
+    # Marshmallow expects an instance (with fields defined), but gets a SchemaMeta (the Marshmallow metaclass), 
+    # which is not iterable — and throws a Type error: TypeError: argument of type 'SchemaMeta' is not iterable
+    # So we must instantiate the schema with () when using alt_response
+    # @blp.arguments(RecipeCreateSchema)
+    # @blp.response(201, RecipeResponseSchema)
+    # @blp.alt_response(400, ErrorSchema(), description="Bad request - invalid input")
+    # For consistency and defensive coding, I am going to always instantiate the schema with ()
+    
+    # We also need to use keyword for schema in alt_response
+    # Flask-Smorest’s signature for alt_response() is:
+    # def alt_response(self, status_code, *, schema=None, description=None, example=None, ...)
+    # That means after status_code, all other arguments must be passed by name, not positionally.
+    @blp.arguments(RecipeCreateSchema())
+    @blp.response(201, RecipeResponseSchema())
+    @blp.alt_response(400, schema=ErrorSchema(), description="Bad request - invalid input")
     def post(self, new_data):
         """
         Add a new recipe
@@ -73,14 +94,20 @@ class RecipeResource(MethodView):
     def get(self, args):
         """
         Get recipes
+
+        Returns all recipes, paginated
         """
         current_app.logger.debug("---------- Starting Get Recipes ----------")
         current_app.logger.debug(f"Getting jobs with args: {args}")
 
         # extract pagination args
+        current_app.logger.debug(f"Max per page -> {MAX_PER_PAGE}")
         page = int(args.get("page", 1)) # default to 1 if nothing provided
         current_app.logger.debug(f"Page -> {page}")
-        per_page = int(args.get("per_page", 10)) # default to 10 if nothing provided
+        per_page = int(args.get("per_page", MAX_PER_PAGE)) # default to max if nothing provided
+
+        if per_page > MAX_PER_PAGE:
+            per_page = MAX_PER_PAGE
 
         paginated_results = paginate_query(
             Recipe.query,

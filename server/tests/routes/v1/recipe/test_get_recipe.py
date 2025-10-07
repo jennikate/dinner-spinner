@@ -8,7 +8,11 @@ Tests for the recipe & recipes endpoint resource in the `src.app.routes.v1/recip
 
 import pytest
 
+from src.app.constants import MAX_PER_PAGE
 from src.app.schemas.recipes import RecipeResponseSchema
+
+from ....helpers import get_pagination_counts
+
 
 # =====================================
 #  Body
@@ -19,7 +23,16 @@ class TestGetAllRecipeWhenNoneExist:
         response = client.get("/v1/recipes")
         data = response.get_json()
 
-        expected_response = []
+        pages = get_pagination_counts(data["items"])["pages"]
+        per_page = get_pagination_counts(data["items"])["per_page"]
+        
+        expected_response = {
+            "items": [], 
+            "page": 1, 
+            "pages": pages, 
+            "per_page": per_page, 
+            "total": 0
+        }
 
         assert response.status_code == 200
         assert data == expected_response
@@ -40,13 +53,30 @@ class TestGetRecipe:
         schema = RecipeResponseSchema(many=True)
         recipes_data = schema.dump(seeded_recipes)  # list of dicts
 
-        expected_response = [
+        pages = get_pagination_counts(data["items"])["pages"]
+        per_page = get_pagination_counts(data["items"])["per_page"]
+
+        mapped_recipes = [
             {
                 **recipe, # unpack -> list of dicts, one per Recipe object
                 "id": recipe["id"], # UUID is generated
                 "notes": recipe["notes"]
             } for recipe in sorted(recipes_data, key=lambda r: r["recipe_name"])
         ]
+
+        # print(f"mapped recipes -> {mapped_recipes}")
+        expected_response = {
+            "items": mapped_recipes[0:MAX_PER_PAGE], # first page only
+            "page": 1,
+            "pages": pages,
+            "per_page": per_page,
+            "total": len(seeded_recipes)
+        }
+
+
+        print(f"pages -> {pages}")
+        print(f"data -> {data}")
+        print(f"expe -> {expected_response}")
 
         assert response.status_code == 200
         assert data == expected_response

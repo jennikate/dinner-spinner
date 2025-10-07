@@ -7,11 +7,32 @@ Common functions used in tests.
 
 from sqlalchemy.exc import SQLAlchemyError
 
+from src.app.constants import MAX_PER_PAGE
 from src.app.extensions import db as _db
+
+from .conftest import seeded_recipes
 
 # =====================================
 # Body
 # =====================================
+
+
+def get_pagination_counts(items):
+    """
+    Reusable helper to get expected pagination counts for tests.
+    """
+    if len(items) < MAX_PER_PAGE and len(items) > 0:
+        pages = 1
+    else:
+        pages = len(items) / MAX_PER_PAGE
+
+    # don't need this here as is, will need it for passing in max per page i think
+    if MAX_PER_PAGE > len(items) and len(items) > 0:
+        per_page = MAX_PER_PAGE
+    else:
+        per_page = MAX_PER_PAGE
+
+    return {"per_page": per_page, "pages": pages}
 
 # --------------------
 # UPDATES

@@ -109,3 +109,4 @@ def seeded_recipes(app, db):
         db.session.add_all(recipes)
         db.session.commit()
     return recipes
+

@@ -5,13 +5,14 @@
 from flask import current_app
 from math import ceil
 
+from ..constants import MAX_PER_PAGE
 from ..schemas.recipes import RecipeResponseSchema
 
 # =====================================
 #  Body
 # =====================================
 
-def paginate_query(query, page=1, per_page=1, order_by=None):
+def paginate_query(query, page=1, per_page=MAX_PER_PAGE, order_by=None):
     """
     Paginate an SQLAlchemy query with optional sorting.
 
