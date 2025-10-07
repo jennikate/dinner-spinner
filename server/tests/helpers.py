@@ -25,16 +25,23 @@ from .conftest import seeded_recipes
 def get_pagination_counts(app, db, page=1, per_page=MAX_PER_PAGE):
     """
     Reusable helper to get pagination counts for recipes."""
-    start = (page-1)*per_page
-    end = page*per_page
 
     with app.app_context():
         total_items = Recipe.query.count()
 
-    pages = ceil(total_items / per_page) if total_items else 0
+
+    # Enforce max per_page limit
+    items_to_include_per_page = min(per_page, MAX_PER_PAGE)
+
+    # Calculate total pages
+    pages = ceil(total_items / items_to_include_per_page) if total_items else 0
+
+    # Calculate start and end indices for slicing
+    start = (page - 1) * items_to_include_per_page
+    end = start + items_to_include_per_page
 
     return {
-        "per_page": per_page,
+        "per_page": items_to_include_per_page,
         "pages": pages,
         "total_items": total_items,
         "recipe_number_start": start,
