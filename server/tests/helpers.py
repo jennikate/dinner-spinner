@@ -5,10 +5,12 @@ Common functions used in tests.
 # Imports
 # =====================================
 
+from math import ceil
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.app.constants import MAX_PER_PAGE
 from src.app.extensions import db as _db
+from src.app.models.recipes import Recipe
 
 from .conftest import seeded_recipes
 
@@ -16,23 +18,29 @@ from .conftest import seeded_recipes
 # Body
 # =====================================
 
+# --------------------
+# PAGINATION
+# --------------------
 
-def get_pagination_counts(items):
+def get_pagination_counts(app, db, page=1, per_page=MAX_PER_PAGE):
     """
-    Reusable helper to get expected pagination counts for tests.
-    """
-    if len(items) < MAX_PER_PAGE and len(items) > 0:
-        pages = 1
-    else:
-        pages = len(items) / MAX_PER_PAGE
+    Reusable helper to get pagination counts for recipes."""
+    start = (page-1)*per_page
+    end = page*per_page
 
-    # don't need this here as is, will need it for passing in max per page i think
-    if MAX_PER_PAGE > len(items) and len(items) > 0:
-        per_page = MAX_PER_PAGE
-    else:
-        per_page = MAX_PER_PAGE
+    with app.app_context():
+        total_items = Recipe.query.count()
 
-    return {"per_page": per_page, "pages": pages}
+    pages = ceil(total_items / per_page) if total_items else 0
+
+    return {
+        "per_page": per_page,
+        "pages": pages,
+        "total_items": total_items,
+        "recipe_number_start": start,
+        "recipe_number_end": end
+    }
+
 
 # --------------------
 # UPDATES

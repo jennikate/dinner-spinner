@@ -15,6 +15,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 
 from src.app import create_app, db as _db # _db to be clear this is the test instance
 from src.app.models.recipes import Recipe 
+from src.app.constants import MAX_PER_PAGE
 
 # =====================================
 # Configuration & setup

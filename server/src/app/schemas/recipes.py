@@ -167,7 +167,7 @@ class RecipeQuerySchema(Schema):
         }
     )      
     per_page = fields.Int(
-        load_default=MAX_PER_PAGE, # used if per_page is not in request
+        load_default=int(MAX_PER_PAGE), # used if per_page is not in request
         metadata={
             "description": "Number of results per page",
             "example": 10

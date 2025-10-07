@@ -19,18 +19,16 @@ from ....helpers import get_pagination_counts
 # =====================================
 
 class TestGetAllRecipeWhenNoneExist:
-    def test_get_all_recipes_when_none_exist(self, client):
+    def test_get_all_recipes_when_none_exist(self, client, app, db):
+        pagination_counts = get_pagination_counts(app, db)
         response = client.get("/v1/recipes")
         data = response.get_json()
-
-        pages = get_pagination_counts(data["items"])["pages"]
-        per_page = get_pagination_counts(data["items"])["per_page"]
         
         expected_response = {
             "items": [], 
             "page": 1, 
-            "pages": pages, 
-            "per_page": per_page, 
+            "pages": pagination_counts["pages"],
+            "per_page": pagination_counts["per_page"],
             "total": 0
         }
 
@@ -40,7 +38,8 @@ class TestGetAllRecipeWhenNoneExist:
 
 @pytest.mark.usefixtures("seeded_recipes")
 class TestGetRecipe:
-    def test_get_all_recipes(self, client, seeded_recipes):
+    def test_get_all_recipes(self, client, app, db, seeded_recipes):
+        pagination_counts = get_pagination_counts(app, db)
         response = client.get("/v1/recipes")
         data = response.get_json()
 
@@ -53,8 +52,36 @@ class TestGetRecipe:
         schema = RecipeResponseSchema(many=True)
         recipes_data = schema.dump(seeded_recipes)  # list of dicts
 
-        pages = get_pagination_counts(data["items"])["pages"]
-        per_page = get_pagination_counts(data["items"])["per_page"]
+        mapped_recipes = [
+            {
+                **recipe, # unpack -> list of dicts, one per Recipe object
+                "id": recipe["id"], # UUID is generated
+                "notes": recipe["notes"]
+            } for recipe in sorted(recipes_data, key=lambda r: r["recipe_name"])
+        ]
+
+        # item slice 
+        # because we've passed nothing to the helper function
+        # the default should -> start at 0, stop at MAX_PER_PAGE -> returns a new list containing the first MAX_PER_PAGE recipes.
+        expected_response = {
+            "items": mapped_recipes[pagination_counts["recipe_number_start"]:pagination_counts["recipe_number_end"]], 
+            "page": 1,
+            "pages": pagination_counts["pages"],
+            "per_page": pagination_counts["per_page"],
+            "total": len(seeded_recipes)
+        }
+
+        assert response.status_code == 200
+        assert data == expected_response
+
+
+    def test_get_all_with_pagination_args(self, client, app, db, seeded_recipes):
+        pagination_counts = get_pagination_counts(app, db, page=2, per_page=1) # we specify 1 per page in args below
+        response = client.get("/v1/recipes?page=2&per_page=1")
+        data = response.get_json()
+
+        schema = RecipeResponseSchema(many=True)
+        recipes_data = schema.dump(seeded_recipes)  # list of dicts
 
         mapped_recipes = [
             {
@@ -64,19 +91,13 @@ class TestGetRecipe:
             } for recipe in sorted(recipes_data, key=lambda r: r["recipe_name"])
         ]
 
-        # print(f"mapped recipes -> {mapped_recipes}")
         expected_response = {
-            "items": mapped_recipes[0:MAX_PER_PAGE], # first page only
-            "page": 1,
-            "pages": pages,
-            "per_page": per_page,
+            "items": mapped_recipes[pagination_counts["recipe_number_start"]:pagination_counts["recipe_number_end"]], # second page only
+            "page": 2, # we request page 2 in the args above
+            "pages": pagination_counts["pages"],
+            "per_page": pagination_counts["per_page"],
             "total": len(seeded_recipes)
         }
-
-
-        print(f"pages -> {pages}")
-        print(f"data -> {data}")
-        print(f"expe -> {expected_response}")
 
         assert response.status_code == 200
         assert data == expected_response
