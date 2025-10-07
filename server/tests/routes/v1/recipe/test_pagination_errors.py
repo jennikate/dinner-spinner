@@ -27,8 +27,6 @@ class TestGetRecipePaginationErrors:
         response = client.get(f"/v1/recipes?page={set_page}&per_page={set_per_page}")
         data = response.get_json()
 
-        print(f"COUNTS -> {pagination_counts}")
-
         schema = RecipeResponseSchema(many=True)
         recipes_data = schema.dump(large_seeded_recipes)  # list of dicts
 
@@ -59,8 +57,6 @@ class TestGetRecipePaginationErrors:
         response = client.get(f"/v1/recipes?page={set_page}&per_page={set_per_page}")
         data = response.get_json()
 
-        print(f"COUNTS -> {pagination_counts}")
-
         schema = RecipeResponseSchema(many=True)
         recipes_data = schema.dump(large_seeded_recipes)  # list of dicts
 
@@ -81,5 +77,30 @@ class TestGetRecipePaginationErrors:
         }
 
         assert response.status_code == 200
+        assert data == expected_response
+
+    
+    def test_request_args_invalid(self, client, app, db, large_seeded_recipes):
+        set_page = "Bob"
+        set_per_page = "Jones"
+        response = client.get(f"/v1/recipes?page={set_page}&per_page={set_per_page}")
+        data = response.get_json()
+
+        expected_response = {
+            "code": 422,
+            "errors": {
+                "query": {
+                    "page": [
+                        "Not a valid integer."
+                    ],
+                    "per_page": [
+                        "Not a valid integer."
+                    ]
+                }
+            },
+            "status": "Unprocessable Entity"
+        }
+
+        assert response.status_code == 422
         assert data == expected_response
 

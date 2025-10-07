@@ -8,7 +8,11 @@ Tests for the pagination using recipe & recipes endpoint resource in the `src.ap
 
 import pytest
 
+from math import ceil
+
+from src.app.models.recipes import Recipe
 from src.app.schemas.recipes import RecipeResponseSchema
+from src.app.utils.paginate import paginate_query
 
 from ....helpers import get_pagination_counts
 
@@ -19,7 +23,6 @@ from ....helpers import get_pagination_counts
 
 @pytest.mark.usefixtures("large_seeded_recipes")
 class TestGetRecipePagination:
-    
     def test_get_all_with_pagination_args(self, client, app, db, large_seeded_recipes):
         set_page = 3
         set_per_page = 9
@@ -49,3 +52,26 @@ class TestGetRecipePagination:
         assert response.status_code == 200
         assert data == expected_response
 
+
+@pytest.mark.usefixtures("large_seeded_recipes")
+class TestPaginateQuery:
+    def test_paginate_query_no_order_by(self, client, app, db, large_seeded_recipes):
+        """
+        Test that pagination works when order_by is not provided.
+        Testing it returns the right number of items but not worried about order as no order passed.
+        """
+        with app.app_context():
+            query = Recipe.query
+            per_page = 5
+            page = 2
+
+            # Do NOT pass order_by
+            result = paginate_query(query, page=page, per_page=per_page)
+
+            assert result["page"] == page
+            assert result["per_page"] == per_page
+            assert result["total"] == len(large_seeded_recipes)
+            assert result["pages"] == ceil(len(large_seeded_recipes) / per_page)
+            assert len(result["items"]) == per_page
+
+        
