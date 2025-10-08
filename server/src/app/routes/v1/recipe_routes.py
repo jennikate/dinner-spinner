@@ -70,10 +70,6 @@ class RecipeResource(MethodView):
         """
         current_app.logger.debug("---------- Starting Post Recipe ----------")
 
-        current_app.logger.debug("--> Creating Ingredients")
-        ingredient_ids = add_ingredients(new_data["ingredients"])
-        print(f"ingredients -> {ingredient_ids}")
-
         current_app.logger.debug(f"--> Creating Recipe")
         # TODO: move to a static method
         try:
@@ -100,31 +96,37 @@ class RecipeResource(MethodView):
 
         current_app.logger.debug(f"Recipe added: {recipe}")
 
-        current_app.logger.debug("--> Creating Recipe+Ingredients Data")
-        # for each ingredient_id create a RecipeIngredient entry
-        for ingredient_id in ingredient_ids:
-            current_app.logger.debug(f"Adding ingredient to recipe_ingredient -> {ingredient_id}")
-            
-            try:
-                recipe_ingredient = RecipeIngredient(
-                    ingredient_id=ingredient_id, 
-                    recipe_id=recipe.id,
-                    amount=1.0,  # default to 1.0 for now
-                    unit_id=UUID("994e5e0d-790d-48ac-8e77-2a8a089b3cf2")  # default to this for now
-                )
-                db.session.add(recipe_ingredient)
-                db.session.commit()
-            except SQLAlchemyError as sqle:
-                db.session.rollback()
-                current_app.logger.error(f"SQLAlchemyError writing to db: {str(sqle)}")
-                abort(500, message=f"An error occurred writing to the db")
-            except Exception as e:
-                db.session.rollback()
-                current_app.logger.error(f"Exception writing to db: {str(e)}")
-                abort(500, message=f"An error occurred writing to the db")
+
+        current_app.logger.debug("--> Checking Ingredients")
+        if new_data.get("ingredients"):
+            current_app.logger.debug("--> Creating Ingredients")
+            ingredient_ids = add_ingredients(new_data["ingredients"])
+            current_app.logger.debug(f"ingredients to add -> {ingredient_ids}")
 
         
-        
+            current_app.logger.debug("--> Creating Recipe+Ingredients Data")
+            # for each ingredient_id create a RecipeIngredient entry
+            for ingredient_id in ingredient_ids:
+                current_app.logger.debug(f"Adding ingredient to recipe_ingredient -> {ingredient_id}")
+                
+                try:
+                    recipe_ingredient = RecipeIngredient(
+                        ingredient_id=ingredient_id, 
+                        recipe_id=recipe.id,
+                        amount=1.0,  # default to 1.0 for now
+                        unit_id=UUID("994e5e0d-790d-48ac-8e77-2a8a089b3cf2")  # default to this for now
+                    )
+                    db.session.add(recipe_ingredient)
+                    db.session.commit()
+                except SQLAlchemyError as sqle:
+                    db.session.rollback()
+                    current_app.logger.error(f"SQLAlchemyError writing to db: {str(sqle)}")
+                    abort(500, message=f"An error occurred writing to the db")
+                except Exception as e:
+                    db.session.rollback()
+                    current_app.logger.error(f"Exception writing to db: {str(e)}")
+                    abort(500, message=f"An error occurred writing to the db")
+
 
         current_app.logger.debug("---------- Finished Post Recipe ----------")
         return recipe

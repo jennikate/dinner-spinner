@@ -110,12 +110,18 @@ class RecipeCreateSchema(BaseRecipeSchema):
             # field_name="recipe_name" attaches the error to the correct field in the Marshmallow error response.
 
     
-class RecipeResponseSchema(BaseRecipeSchema):
-    class Meta:
-        model = Recipe
-        load_instance = True 
-        # return an SQLAlchemy model instance instead of a plain dictionary
-        # So when I deserialize JSON with this schema, give me a Recipe object, not a Python dict.
+class RecipeResponseSchema(Schema):
+    # TODO: decide what we want to return in the recipe response
+
+    # for not just returning the ID so it can be used in the frontend
+    id = fields.UUID(dump_only=True)
+
+    # To return the whole recipe model (which does not have ingredients use the below)
+    # class Meta:
+    #     model = Recipe
+    #     load_instance = True 
+    #     # return an SQLAlchemy model instance instead of a plain dictionary
+    #     # So when I deserialize JSON with this schema, give me a Recipe object, not a Python dict.
 
 
 class RecipeUpdateSchema(BaseRecipeSchema):
