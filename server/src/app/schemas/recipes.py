@@ -10,42 +10,12 @@ from marshmallow import Schema, ValidationError, fields, validates_schema
 from ..constants import MAX_PER_PAGE
 from ..extensions import db as _db
 from ..models.recipes import Recipe
+from .ingredients import BaseIngredientSchema, IngredientTypeSchema
 
 
 # =====================================
 # Body
 # =====================================
-
-class MessageSchema(Schema):
-    message = fields.String(required=True, metadata={"example": "Item deleted successfully"})
-
-
-class ErrorSchema(Schema):
-    status = fields.Int(
-        required=True, 
-        metadata={
-            "example": 400,
-            "description": "HTTP status code of the error"
-        }
-    )
-    error = fields.Str(
-        required=True,
-        metadata={
-            "example": "Bad Request",
-            "description": "Short error type or reason"
-        }
-    )
-    message = fields.Str(
-        required=True,
-        metadata={
-            "example": "Recipe name already in use",
-            "description": "Detailed explanation of the error"
-        }
-    )
-
-    class Meta:
-        description = "Standard error response schema"
-
 
 # ------------------
 # RECIPES
@@ -85,6 +55,10 @@ class BaseRecipeSchema(Schema):
             "description": "The name of the recipe", 
             "example": "Beef Goulash"
         }
+    )
+    ingredients = fields.List(
+        fields.Nested(BaseIngredientSchema),
+        required=False
     )
 
     # validates_schema runs after all fields are deserialized, so instructions can be a nested list safely.

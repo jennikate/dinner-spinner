@@ -21,8 +21,12 @@ from uuid import UUID
 
 from ...constants import MAX_PER_PAGE
 from ...extensions import db
+from ...models.ingredients import Ingredient
 from ...models.recipes import Recipe
-from ...schemas.recipes import ErrorSchema, MessageSchema, RecipeCreateSchema, RecipeQuerySchema, RecipeResponseSchema, RecipeUpdateSchema
+from ... schemas.generic import ErrorSchema, MessageSchema
+from ...schemas.recipes import RecipeCreateSchema, RecipeQuerySchema, RecipeResponseSchema, RecipeUpdateSchema
+
+from .ingredient_routes import add_ingredients
 
 # For manually doing pagination without smorest see this helper function
 # currently am using smorest but keeping function for reference on how it works
@@ -65,27 +69,31 @@ class RecipeResource(MethodView):
         """
         current_app.logger.debug("---------- Starting Post Recipe ----------")
 
-        try:
-            # validation is set on the schema and run via the 
-            # @blp.arguements command, erroring out before
-            # code reaches here
-            current_app.logger.debug(f"Recipe new_data: {new_data}")
-            recipe = Recipe(**new_data)
-            db.session.add(recipe)
-            db.session.commit()
-        except SQLAlchemyError as sqle:
-            db.session.rollback()
-            current_app.logger.error(f"SQLAlchemyError writing to db: {str(sqle)}")
-            abort(500, message=f"An error occurred writing to the db")
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Exception writing to db: {str(e)}")
-            abort(500, message=f"An error occurred writing to the db")
+        current_app.logger.debug("---------- Checking Ingredients ----------")
+        ingredient_ids = add_ingredients(new_data["ingredients"])
+        print(f"ingredients -> {ingredient_ids}")
 
-        current_app.logger.debug(f"Recipe added: {recipe}")
+        # try:
+        #     # validation is set on the schema and run via the 
+        #     # @blp.arguements command, erroring out before
+        #     # code reaches here
+        #     current_app.logger.debug(f"Recipe new_data: {new_data}")
+        #     recipe = Recipe(**new_data)
+        #     db.session.add(recipe)
+        #     db.session.commit()
+        # except SQLAlchemyError as sqle:
+        #     db.session.rollback()
+        #     current_app.logger.error(f"SQLAlchemyError writing to db: {str(sqle)}")
+        #     abort(500, message=f"An error occurred writing to the db")
+        # except Exception as e:
+        #     db.session.rollback()
+        #     current_app.logger.error(f"Exception writing to db: {str(e)}")
+        #     abort(500, message=f"An error occurred writing to the db")
 
-        current_app.logger.debug("---------- Finished Post Recipe ----------")
-        return recipe
+        # current_app.logger.debug(f"Recipe added: {recipe}")
+
+        # current_app.logger.debug("---------- Finished Post Recipe ----------")
+        # return recipe
 
 
     @blp.arguments(RecipeQuerySchema, location="query")
