@@ -26,6 +26,7 @@ from ...models.recipe_ingredients import RecipeIngredient
 from ...models.recipes import Recipe
 from ... schemas.generic import ErrorSchema, MessageSchema
 from ...schemas.recipes import RecipeCreateSchema, RecipeQuerySchema, RecipeResponseSchema, RecipeUpdateSchema
+from ...services.db_services import save_to_db
 
 from .ingredient_routes import add_ingredients
 
@@ -71,29 +72,20 @@ class RecipeResource(MethodView):
         current_app.logger.debug("---------- Starting Post Recipe ----------")
 
         current_app.logger.debug(f"--> Creating Recipe")
-        # TODO: move to a static method
-        try:
-            # validation is set on the schema and run via the 
-            # @blp.arguements command, erroring out before
-            # code reaches here
-            current_app.logger.debug(f"Recipe new_data: {new_data}")
+        # validation is set on the schema and run via the 
+        # @blp.arguements command, erroring out before
+        # code reaches here
+        current_app.logger.debug(f"Recipe new_data: {new_data}")
 
-            # We do not include ingredients in recipe table
-            # so remove them from new_data dict
-            new_data.pop("ingredients", None)
-            current_app.logger.debug(f"Recipe new_data post pop: {new_data}")
-            recipe = Recipe(**new_data)
-            db.session.add(recipe)
-            db.session.commit()
-        except SQLAlchemyError as sqle:
-            db.session.rollback()
-            current_app.logger.error(f"SQLAlchemyError writing to db: {str(sqle)}")
-            abort(500, message=f"An error occurred writing to the db")
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Exception writing to db: {str(e)}")
-            abort(500, message=f"An error occurred writing to the db")
+        # Ingredients are not added to the Recipe model directly
+        # so we need to pop them out of the new_data dict
+        recipe_data = new_data.copy()
+        recipe_data.pop("ingredients", None)
 
+        current_app.logger.debug(f"Recipe new_data post pop: {recipe_data}")
+        recipe = Recipe(**recipe_data)
+
+        save_to_db(recipe)
         current_app.logger.debug(f"Recipe added: {recipe}")
 
 
@@ -109,24 +101,14 @@ class RecipeResource(MethodView):
             for ingredient_id in ingredient_ids:
                 current_app.logger.debug(f"Adding ingredient to recipe_ingredient -> {ingredient_id}")
                 
-                try:
-                    recipe_ingredient = RecipeIngredient(
-                        ingredient_id=ingredient_id, 
-                        recipe_id=recipe.id,
-                        amount=1.0,  # default to 1.0 for now
-                        unit_id=UUID("994e5e0d-790d-48ac-8e77-2a8a089b3cf2")  # default to this for now
-                    )
-                    db.session.add(recipe_ingredient)
-                    db.session.commit()
-                except SQLAlchemyError as sqle:
-                    db.session.rollback()
-                    current_app.logger.error(f"SQLAlchemyError writing to db: {str(sqle)}")
-                    abort(500, message=f"An error occurred writing to the db")
-                except Exception as e:
-                    db.session.rollback()
-                    current_app.logger.error(f"Exception writing to db: {str(e)}")
-                    abort(500, message=f"An error occurred writing to the db")
+                recipe_ingredient = RecipeIngredient(
+                    ingredient_id=ingredient_id, 
+                    recipe_id=recipe.id,
+                    amount=1.0,  # default to 1.0 for now
+                    unit_id=UUID("994e5e0d-790d-48ac-8e77-2a8a089b3cf2")  # default to this for now
+                )
 
+                save_to_db(recipe_ingredient)
 
         current_app.logger.debug("---------- Finished Post Recipe ----------")
         return recipe
