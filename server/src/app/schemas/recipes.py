@@ -10,7 +10,7 @@ from marshmallow import Schema, ValidationError, fields, validates_schema
 from ..constants import MAX_PER_PAGE
 from ..extensions import db as _db
 from ..models.recipes import Recipe
-from .ingredients import BaseIngredientSchema, IngredientTypeSchema
+from .ingredients import BaseIngredientSchema, IngredientCreateSchema, IngredientTypeSchema
 
 
 # =====================================

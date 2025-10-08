@@ -56,17 +56,17 @@ def add_ingredients(ingredients):
         ingredient_id = ingredient_data.get("id")
         current_app.logger.debug(f"ID returned -> {ingredient_id}")
 
-        if ingredient_id:
-            # check the ID does actually exist in db
-            existing = Ingredient.query.get(ingredient_id)
-            current_app.logger.debug(f"ID exists -> {existing}")
-
         # only if it exists can we append it to the list, otherwise we treat it as a new ingredient
-        if existing:
+        if ingredient_id and Ingredient.query.get(ingredient_id):
+            existing = Ingredient.query.get(ingredient_id)
             current_app.logger.debug(f"Existing true so adding id -> {existing.id}")
             ingredient_ids.append(existing.id)
         else:
             # add ingredient to database and get its UUID for use on recipe
+            # ingredient_data from the recipe includes amount and unit that is not stored on the ingredient table
+            # so we need to remove these keys before creating the Ingredient object
+            ingredient_data.pop("amount", None)
+            ingredient_data.pop("unit", None)
             ingredient = Ingredient(**ingredient_data)
             current_app.logger.debug(f"Adding new ingredient to database -> {ingredient}")
 
