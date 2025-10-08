@@ -91,8 +91,16 @@ class IngredientCreateSchema(IngredientTypeSchema):
             raise ValidationError("ingredient_name must not exceed 64 characters.")
 
     
-class IngredientResponseSchema(IngredientTypeSchema):
+class IngredientResponseSchema(BaseIngredientSchema):
     class Meta:
-        model = IngredientType
+        model = RecipeIngredient
         load_instance = True
         include_fk = True
+
+    amount = fields.Float(
+        required=True,
+        metadata={
+            "description": "The amount of the ingredient",
+            "example": "1.5"
+        }
+    )

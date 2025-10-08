@@ -6,11 +6,13 @@ This defines the Marshmallow schemas for recipes for the API.
 # =====================================
 
 from marshmallow import Schema, ValidationError, fields, validates_schema
+from marshmallow_sqlalchemy import auto_field
 
 from ..constants import MAX_PER_PAGE
 from ..extensions import db as _db
 from ..models.recipes import Recipe
-from .ingredients import BaseIngredientSchema, IngredientCreateSchema, IngredientTypeSchema
+from ..models.recipe_ingredients import RecipeIngredient
+from .ingredients import BaseIngredientSchema
 
 
 # =====================================
@@ -109,13 +111,7 @@ class RecipeCreateSchema(BaseRecipeSchema):
             )
             # field_name="recipe_name" attaches the error to the correct field in the Marshmallow error response.
 
-class RecipeResponseSchema(BaseRecipeSchema):
-    class Meta:
-        model = Recipe
-        load_instance = True 
-        # return an SQLAlchemy model instance instead of a plain dictionary
-        # So when I deserialize JSON with this schema, give me a Recipe object, not a Python dict.
-    # TODO: include ingredients in response schema properly
+
 
 class RecipeUpdateSchema(BaseRecipeSchema):
     """
@@ -146,3 +142,32 @@ class RecipeQuerySchema(Schema):
             "example": 10
         }
     )
+
+
+class BaseRecipeIngredientSchema(Schema):
+    class Meta:
+        model = RecipeIngredient
+        load_instance = True
+
+    id = fields.UUID(dump_only=True)
+    amount = fields.Float(
+        required=True,
+        metadata={
+            "description": "The amount of the ingredient",
+            "example": "1.5"
+        }
+    )
+    
+    ingredient = fields.Nested(BaseIngredientSchema)
+    # unit = fields.Nested(UnitSchema)
+
+
+class RecipeResponseSchema(BaseRecipeSchema):
+    class Meta:
+        model = Recipe
+        load_instance = True 
+        # return an SQLAlchemy model instance instead of a plain dictionary
+        # So when I deserialize JSON with this schema, give me a Recipe object, not a Python dict.
+    
+    # Include the nested RecipeIngredient data
+    recipe_ingredients = fields.Nested(BaseRecipeIngredientSchema, many=True)
