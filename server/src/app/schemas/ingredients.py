@@ -29,6 +29,7 @@ class BaseIngredientSchema(Schema):
         include_relationships = False   # stop Marshmallow automatically adding nested fields from the model, let me control this & serialization
 
     id = fields.UUID(
+        data_key="ingredient_id",
         metadata={
             "description": "The ingredient UUID if using an existing ingredient",
             "example": "id: 123 is 'milk'"

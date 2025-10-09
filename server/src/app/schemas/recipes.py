@@ -16,11 +16,11 @@ from .ingredients import BaseIngredientSchema
 
 
 # =====================================
-# Body
+# RECIPES
 # =====================================
 
 # ------------------
-# RECIPES
+# BASE
 # ------------------
 
 class InstructionSchema(Schema):
@@ -34,7 +34,7 @@ class BaseRecipeSchema(Schema):
         load_instance = True
         include_fk = True  # there are fks
 
-    id = fields.UUID(dump_only=True)
+    id = fields.UUID(dump_only=True, data_key="recipe_id")
     recipe_name = fields.Str(
         required=True, 
         metadata={
@@ -91,7 +91,32 @@ class BaseRecipeSchema(Schema):
     #         if not instr["instruction"].strip():
     #             raise ValidationError("Instruction text cannot be empty", "instructions")
     #         expected_step += 1
-        
+
+
+# ------------------
+# QUERIES
+# ------------------       
+class RecipeQuerySchema(Schema):
+    page = fields.Int(
+        load_default=1, # used if page is not in request
+        metadata={
+            "description§": "Page number for pagination (1-indexed)",
+            "example": 1
+        }
+    )      
+    per_page = fields.Int(
+        load_default=int(MAX_PER_PAGE), # used if per_page is not in request
+        metadata={
+            "description": "Number of results per page",
+            "example": 10
+        }
+    )
+
+
+# ------------------
+# Create, Update
+# ------------------
+      
 class RecipeCreateSchema(BaseRecipeSchema):
     @validates_schema
     def validate_unique_name(self, data, **kwargs):
@@ -112,7 +137,6 @@ class RecipeCreateSchema(BaseRecipeSchema):
             # field_name="recipe_name" attaches the error to the correct field in the Marshmallow error response.
 
 
-
 class RecipeUpdateSchema(BaseRecipeSchema):
     """
     We have a specific update schema to allow a PUT method
@@ -126,30 +150,57 @@ class RecipeUpdateSchema(BaseRecipeSchema):
         model = Recipe
         load_instance = True 
 
-        
-class RecipeQuerySchema(Schema):
-    page = fields.Int(
-        load_default=1, # used if page is not in request
-        metadata={
-            "description§": "Page number for pagination (1-indexed)",
-            "example": 1
-        }
-    )      
-    per_page = fields.Int(
-        load_default=int(MAX_PER_PAGE), # used if per_page is not in request
-        metadata={
-            "description": "Number of results per page",
-            "example": 10
-        }
-    )
 
-
+# ------------------
+# RETURN client facing
+# ------------------
+# The Base schema is designed for public use
+# so it excludes excess ID's that a client does
+# not need to know about
 class BaseRecipeIngredientSchema(Schema):
     class Meta:
         model = RecipeIngredient
         load_instance = True
 
-    id = fields.UUID(dump_only=True)
+    amount = fields.Float(
+        required=True,
+        metadata={
+            "description": "The amount of the ingredient",
+            "example": "1.5"
+        }
+    )
+
+    # Rather than including (nesting) everything from the BaseIngredientSchema
+    # We can use the lambda Function to include just the fields we want
+    # from the model
+    ingredient_name = fields.Function(lambda obj: obj.ingredient.ingredient_name)
+
+
+class RecipeResponseSchema(BaseRecipeSchema):
+    class Meta:
+        model = Recipe
+        load_instance = True 
+        # return an SQLAlchemy model instance instead of a plain dictionary
+        # So when I deserialize JSON with this schema, give me a Recipe object, not a Python dict.
+    
+    # Include the nested RecipeIngredient data
+    recipe_ingredients = fields.Nested(BaseRecipeIngredientSchema, many=True)
+
+
+# ------------------
+# RETURN internal
+# ------------------
+# The internal schema includes all fields from models esp. IDs
+# Which we need internally to Update & Delete on association tables
+class InternalRecipeIngredientSchema(BaseRecipeSchema):
+    class Meta:
+        model = RecipeIngredient
+        load_instance = True
+
+    id = fields.UUID(
+        dump_only=True,
+        data_key="association_table_id"
+    )
     amount = fields.Float(
         required=True,
         metadata={
@@ -162,12 +213,11 @@ class BaseRecipeIngredientSchema(Schema):
     # unit = fields.Nested(UnitSchema)
 
 
-class RecipeResponseSchema(BaseRecipeSchema):
+class InternalRecipeResponseSchema(BaseRecipeSchema):
     class Meta:
         model = Recipe
         load_instance = True 
-        # return an SQLAlchemy model instance instead of a plain dictionary
-        # So when I deserialize JSON with this schema, give me a Recipe object, not a Python dict.
-    
-    # Include the nested RecipeIngredient data
-    recipe_ingredients = fields.Nested(BaseRecipeIngredientSchema, many=True)
+
+    # Include the FULL RecipeIngredient data by using the Internal schema
+    recipe_ingredients = fields.Nested(InternalRecipeIngredientSchema, many=True)
+
