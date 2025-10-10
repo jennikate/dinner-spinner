@@ -34,5 +34,5 @@ class TestDeleteRecipe:
 
         # verify recipe is no longer there
         new_get_response = client.get("/v1/recipes")
-        assert original_data["id"] not in new_get_response.get_json()
+        assert original_data["recipe_id"] not in new_get_response.get_json()
             

@@ -11,10 +11,11 @@ import pytest
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import joinedload, sessionmaker, scoped_session
 
 from src.app import create_app, db as _db # _db to be clear this is the test instance
 from src.app.models.recipes import Recipe 
+from src.app.models.recipe_ingredients import RecipeIngredient
 from src.app.constants import MAX_PER_PAGE
 
 # =====================================
@@ -109,32 +110,46 @@ def seeded_recipes(app, db):
     with app.app_context():
         db.session.add_all(recipes)
         db.session.commit()
+
+    # Re-query recipes to ensure they are fully loaded and attached
+    recipes = db.session.query(Recipe).options(
+        joinedload(Recipe.recipe_ingredients)
+        .joinedload(RecipeIngredient.ingredient),
+        joinedload(Recipe.recipe_ingredients)
+        .joinedload(RecipeIngredient.unit)
+    ).all()
+
     return recipes
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def large_seeded_recipes(app, db):
     """
-    Seed the database with 40 recipes for pagination testing.
+    Seed many recipes for pagination tests.
     """
-    recipes = []
+    recipes = [
+        Recipe(
+            recipe_name=f"Recipe {i+1}",
+            instructions=[{"step_number": 1, "instruction": "Do something"}]
+        )
+        for i in range(50)  # seed 50 recipes
+    ]
 
-    for i in range(1, 41):  # 40 recipes
-        recipe = {
-            "recipe_name": f"Recipe {i}",
-            "instructions": [
-                {"step_number": 1, "instruction": f"Step 1 for Recipe {i}"},
-                {"step_number": 2, "instruction": f"Step 2 for Recipe {i}"}
-            ],
-            "notes": f"Sample note for Recipe {i}"
-        }
-        recipes.append(recipe)
-
-    # Insert into database
     with app.app_context():
-        recipe_objects = [Recipe(**r) for r in recipes]
-        db.session.add_all(recipe_objects)
+        db.session.add_all(recipes)
         db.session.commit()
 
-    return recipe_objects  # return list of ORM objects for tests
+        # Re-query recipes to ensure they are fully loaded and attached
+        # This is needed because the .commit ends the session and detaches objects
+        # and they can no longer be reliably accessed in tests
+        # joinedload ensures recipe_ingredients and their nested ingredient/unit are eagerly loaded
+        # making sure they're available to the tests without lazy loading issues
+        recipes = db.session.query(Recipe).options(
+            joinedload(Recipe.recipe_ingredients)
+            .joinedload(RecipeIngredient.ingredient),
+            joinedload(Recipe.recipe_ingredients)
+            .joinedload(RecipeIngredient.unit)
+        ).all()
+
+    return recipes
 

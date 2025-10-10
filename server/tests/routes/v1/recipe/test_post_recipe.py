@@ -22,11 +22,14 @@ class TestPostRecipe:
 
         expected_response = {
             **base_recipe, # unpack (spread operator)
-            "id": data["id"], # UUID is generated
-            "notes": None
+            "recipe_id": data["recipe_id"], # UUID is generated
+            "notes": None,
+            "recipe_ingredients": []
         }
 
         assert response.status_code == 201
+        print(f"data: {data}")
+        print(f"expected_response: {expected_response}")
         assert data == expected_response
 
 
@@ -44,8 +47,9 @@ class TestPostRecipe:
 
         expected_response = {
             **base_recipe, # unpack (spread operator)
-            "id": data["id"], # UUID is generated
-            "notes": "I wrote some notes"
+            "recipe_id": data["recipe_id"], # UUID is generated
+            "notes": "I wrote some notes",
+            "recipe_ingredients": []
         }
 
         assert response.status_code == 201
@@ -74,11 +78,10 @@ class TestPostRecipe:
 
         expected_response = {
             **base_recipe, # unpack (spread operator)
-            "id": data["id"], # UUID is generated
-            "notes": None
+            "recipe_id": data["recipe_id"], # UUID is generated
+            "notes": None,
+            "recipe_ingredients": []
         }
 
         assert response.status_code == 201
         assert data == expected_response
-
-

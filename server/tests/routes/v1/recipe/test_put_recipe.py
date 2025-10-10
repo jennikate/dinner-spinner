@@ -31,13 +31,14 @@ class TestPutRecipe:
         }
 
         expected_put_response = {
-            "id": recipe_id,
+            "recipe_id": recipe_id,
             "instructions": [
                 {"step_number": 1,"instruction": "New first instruction"},
                 {"step_number": 2,"instruction": "New second instruction"}
             ],
             "notes": "Adding some notes",
-            "recipe_name": "My updated simple recipe"
+            "recipe_name": "My updated simple recipe",
+            "recipe_ingredients": []
         }
 
         assert_recipe_update(
@@ -58,10 +59,11 @@ class TestPutRecipe:
         }
 
         expected_put_response = {
-            "id": str(recipe.id),
+            "recipe_id": str(recipe.id),
             "instructions": recipe.instructions,
             "notes": recipe.notes,
-            "recipe_name": "My updated simple recipe name"
+            "recipe_name": "My updated simple recipe name",
+            "recipe_ingredients": []
         }
 
         assert_recipe_update(
@@ -83,10 +85,11 @@ class TestPutRecipe:
         }
 
         expected_put_response = {
-            "id": str(recipe.id),
+            "recipe_id": str(recipe.id),
             "instructions": recipe.instructions,
             "notes": "Adding a note now",
-            "recipe_name": recipe.recipe_name
+            "recipe_name": recipe.recipe_name,
+            "recipe_ingredients": []
         }
 
         assert_recipe_update(
@@ -108,10 +111,11 @@ class TestPutRecipe:
         }
 
         expected_put_response = {
-            "id": str(recipe.id),
+            "recipe_id": str(recipe.id),
             "instructions": recipe.instructions,
             "notes": None,
-            "recipe_name": recipe.recipe_name
+            "recipe_name": recipe.recipe_name,
+            "recipe_ingredients": []
         }
 
         assert_recipe_update(
@@ -137,7 +141,8 @@ class TestPutRecipe:
 
         expected_put_response = {
             **updated_recipe,
-            "id": str(recipe.id)
+            "recipe_id": str(recipe.id),
+            "recipe_ingredients": []
         }
 
         assert_recipe_update(
@@ -160,10 +165,11 @@ class TestPutRecipe:
         }
 
         expected_response =  {
-            "id": str(recipe.id), 
+            "recipe_id": str(recipe.id), 
             "instructions": recipe.instructions, 
             "notes": recipe.notes,
-            "recipe_name": recipe.recipe_name
+            "recipe_name": recipe.recipe_name,
+            "recipe_ingredients": []
         }
 
         assert_recipe_update(

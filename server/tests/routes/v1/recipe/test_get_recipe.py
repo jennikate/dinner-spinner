@@ -54,7 +54,7 @@ class TestGetRecipe:
         mapped_recipes = [
             {
                 **recipe, # unpack -> list of dicts, one per Recipe object
-                "id": recipe["id"], # UUID is generated
+                "recipe_id": recipe["recipe_id"], # UUID is generated
                 "notes": recipe["notes"]
             } for recipe in sorted(recipes_data, key=lambda r: r["recipe_name"])
         ]
