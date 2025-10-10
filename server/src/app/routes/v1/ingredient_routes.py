@@ -46,7 +46,7 @@ def add_ingredients(ingredients):
     """
     current_app.logger.debug("---------- Starting Add Ingredient Method ----------")
     current_app.logger.debug(f"Getting ids for -> {ingredients}")
-    ingredient_ids = []
+    ingredients_to_return = []
 
     # map over ingredients and check if it has an id
     for ingredient_data in ingredients:
@@ -60,7 +60,7 @@ def add_ingredients(ingredients):
         if ingredient_id and Ingredient.query.get(ingredient_id):
             existing = Ingredient.query.get(ingredient_id)
             current_app.logger.debug(f"Existing true so adding id -> {existing.id}")
-            ingredient_ids.append(existing.id)
+            ingredients_to_return.append(existing)
         else:
             # add ingredient to database and get its UUID for use on recipe
             # ingredient_data from the recipe includes amount and unit that is not stored on the ingredient table
@@ -83,7 +83,7 @@ def add_ingredients(ingredients):
                 abort(500, message=f"An error occurred writing to the db")
 
             current_app.logger.debug(f"Added -> {ingredient}")
-            ingredient_ids.append(ingredient.id)
+            ingredients_to_return.append(ingredient)
     
     current_app.logger.debug("---------- Finished Add Ingredient Method ----------")
-    return ingredient_ids
+    return ingredients_to_return

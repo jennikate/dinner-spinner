@@ -28,7 +28,12 @@ class Recipe(db.Model):
     instructions = db.Column(JSON, nullable=False)
     notes = db.Column(db.String(1024), nullable=True)
 
-    recipe_ingredients = db.relationship('RecipeIngredient', back_populates='recipe')
+    recipe_ingredients = db.relationship(
+        'RecipeIngredient', 
+        back_populates='recipe',
+        cascade="all, delete-orphan", # Automatically delete associated records in ORM
+        passive_deletes=True # allows ondelete="CASCADE" on ForeignKey to work
+    )
     # NOTES:
     # recipe_ingredients -> attribute name on current model (Recipe).
     # tells SQLAlchemy: “when I have a Recipe, I can access its related RecipeIngredient rows via .recipe_ingredients”.

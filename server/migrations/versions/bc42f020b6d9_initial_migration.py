@@ -1,8 +1,8 @@
-"""Initial migration.
+"""Initial migration
 
-Revision ID: 11cf5474e9d1
+Revision ID: bc42f020b6d9
 Revises: 
-Create Date: 2025-09-25 16:42:24.231903
+Create Date: 2025-10-10 11:40:40.374751
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import sqlite
 
 # revision identifiers, used by Alembic.
-revision = '11cf5474e9d1'
+revision = 'bc42f020b6d9'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,39 +21,41 @@ def upgrade():
     op.create_table('ingredient_types',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('ingredient_type', sa.String(length=32), nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_ingredient_types'))
     )
     op.create_table('recipes',
     sa.Column('id', sa.Uuid(), nullable=False),
-    sa.Column('recipe_name', sa.String(length=32), nullable=False),
+    sa.Column('recipe_name', sa.String(length=64), nullable=False),
     sa.Column('instructions', sqlite.JSON(), nullable=False),
     sa.Column('notes', sa.String(length=1024), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('recipe_name')
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_recipes')),
+    sa.UniqueConstraint('recipe_name', name=op.f('uq_recipes_recipe_name'))
     )
     op.create_table('units',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('unit_name', sa.String(length=32), nullable=False),
     sa.Column('abbreviation', sa.String(length=16), nullable=True),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_units'))
     )
     op.create_table('ingredients',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('ingredient_name', sa.String(length=32), nullable=False),
     sa.Column('type_id', sa.UUID(), nullable=True),
-    sa.ForeignKeyConstraint(['type_id'], ['ingredient_types.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['type_id'], ['ingredient_types.id'], name=op.f('fk_ingredients_type_id_ingredient_types')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_ingredients'))
     )
     op.create_table('recipe_ingredients',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('amount', sa.Float(), nullable=False),
-    sa.Column('recipe_id', sa.UUID(), nullable=False),
-    sa.Column('ingredient_id', sa.UUID(), nullable=False),
-    sa.Column('unit_id', sa.UUID(), nullable=False),
-    sa.ForeignKeyConstraint(['ingredient_id'], ['ingredients.id'], ),
-    sa.ForeignKeyConstraint(['recipe_id'], ['recipes.id'], ),
-    sa.ForeignKeyConstraint(['unit_id'], ['units.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.Column('recipe_id', sa.UUID(), nullable=True),
+    sa.Column('ingredient_id', sa.UUID(), nullable=True),
+    sa.Column('unit_id', sa.UUID(), nullable=True),
+    sa.Column('ingredient_name', sa.String(), nullable=False),
+    sa.Column('unit_name', sa.String(), nullable=False),
+    sa.ForeignKeyConstraint(['ingredient_id'], ['ingredients.id'], name=op.f('fk_recipe_ingredients_ingredient_id_ingredients')),
+    sa.ForeignKeyConstraint(['recipe_id'], ['recipes.id'], name=op.f('fk_recipe_ingredients_recipe_id_recipes'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['unit_id'], ['units.id'], name=op.f('fk_recipe_ingredients_unit_id_units')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_recipe_ingredients'))
     )
     # ### end Alembic commands ###
 
