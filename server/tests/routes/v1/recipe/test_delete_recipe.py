@@ -35,4 +35,26 @@ class TestDeleteRecipe:
         # verify recipe is no longer there
         new_get_response = client.get("/v1/recipes")
         assert original_data["recipe_id"] not in new_get_response.get_json()
+
+# @pytest.mark.usefixtures("seeded_recipes_with_ingredients")
+# class TestDeleteRecipeWithIngredients:
+#     def test_delete_recipe_with_ingredients(self, client, seeded_recipes_with_ingredients):
+#         # Get a recipe and verify it exists
+#         recipe_id = str(seeded_recipes_with_ingredients[0].id)
+#         original_response = client.get(f"/v1/recipes/{recipe_id}")
+#         original_data = original_response.get_json()
+
+#         expected_original_response = RecipeResponseSchema().dump(seeded_recipes_with_ingredients[0])
+        
+#         assert original_response.status_code == 200
+#         assert original_data == expected_original_response
+
+#         # delete the recipe
+#         delete_response = client.delete(f"/v1/recipes/{recipe_id}")
+#         assert delete_response.status_code == 200
+#         assert delete_response.get_json() == {"message": f"recipe id {recipe_id} deleted" }
+
+#         # verify recipe is no longer there
+#         new_get_response = client.get("/v1/recipes")
+#         assert original_data["recipe_id"] not in new_get_response.get_json()
             
