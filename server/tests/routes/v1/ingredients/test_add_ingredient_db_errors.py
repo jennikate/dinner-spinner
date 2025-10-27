@@ -68,7 +68,7 @@ class TestAddIngredientStaticMethodWithDbErrors:
         expected_response = {
             "failed": [
                 {
-                    "ingredient_name": "Milk"
+                    "ingredient_name": "milk" # gets converted to lowercase
                 }
             ], 
             "saved": []    

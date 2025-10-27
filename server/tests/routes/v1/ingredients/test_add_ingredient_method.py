@@ -33,8 +33,8 @@ class TestAddIngredientStaticMethod:
         expected_response = {
             "failed": [], 
             "saved": [
-                { "ingredient_name": "Milk" },
-                { "ingredient_name": "Eggs" }
+                { "ingredient_name": "milk" },
+                { "ingredient_name": "eggs" }
             ]    
         }
 
@@ -58,8 +58,8 @@ class TestAddIngredientStaticMethod:
         expected_response = {
             "failed": [], 
             "saved": [
-                { "ingredient_name": "Milk" },
-                { "ingredient_name": "Eggs" }
+                { "ingredient_name": "milk" },
+                { "ingredient_name": "eggs" }
             ]    
         }
 
@@ -103,8 +103,8 @@ class TestAddIngredientStaticMethodWithExisting:
             "failed": [], 
             "saved": [
                 { "ingredient_name": seeded["ingredient_name"] },
-                { "ingredient_name": "Milk" },
-                { "ingredient_name": "Eggs" }
+                { "ingredient_name": "milk" },
+                { "ingredient_name": "eggs" }
             ]    
         }
 
