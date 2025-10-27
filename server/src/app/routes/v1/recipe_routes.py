@@ -76,8 +76,6 @@ class RecipeResource(MethodView):
             current_app.logger.debug("--> Creating Ingredients")
             current_app.logger.debug(f"passing the following to add_ingredients -> {new_data["ingredients"]}")
             ingredients_to_add = add_ingredients(new_data["ingredients"])
-            current_app.logger.debug(f"ingredients to add -> {ingredients_to_add}")
-            print(f"ingredients to add -> {ingredients_to_add}")
             
             current_app.logger.debug("--> Checking for ingredient failures")
             current_app.logger.debug(f"Failed ingredients: {ingredients_to_add["failed"]}")
