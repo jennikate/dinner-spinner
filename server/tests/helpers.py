@@ -129,3 +129,11 @@ def assert_generic_error(*, client, monkeypatch, endpoint, method, payload=None)
         data = response.get_json()
         assert "An error occurred writing to the db" in data["message"] 
 
+
+# --------------------
+# SERIALIZATION
+# --------------------
+
+def serialize_ingredients(ingredients_list):
+    print(f"serializing -> {ingredients_list}")
+    return [{"ingredient_name": i.ingredient_name} for i in ingredients_list]

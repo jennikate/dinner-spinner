@@ -87,6 +87,8 @@ class IngredientCreateSchema(IngredientTypeSchema):
     def validate_ingredient_name(self, value, **kwargs):
         if not value.strip():
             raise ValidationError("ingredient_value must not be empty.")
+        if len(value) < 1:
+            raise ValidationError("ingredient_value must not be empty.")
         
         if len(value) > 64:
             raise ValidationError("ingredient_name must not exceed 64 characters.")

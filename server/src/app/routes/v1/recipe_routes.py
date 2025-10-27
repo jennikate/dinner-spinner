@@ -80,7 +80,7 @@ class RecipeResource(MethodView):
         # Ingredients are not added to the Recipe model directly
         # so we need to pop them out of the new_data dict
         recipe_data = new_data.copy()
-        recipe_data.pop("ingredients", None)
+        recipe_data.pop("ingredients", None) # if no ingredients exist return None, prevents errors for missing optional key (ingredients is optional)
 
         current_app.logger.debug(f"Recipe new_data post pop: {recipe_data}")
         recipe = Recipe(**recipe_data)
@@ -96,10 +96,9 @@ class RecipeResource(MethodView):
             ingredients_to_add = add_ingredients(new_data["ingredients"])
             current_app.logger.debug(f"ingredients to add -> {ingredients_to_add}")
 
-        
             current_app.logger.debug("--> Creating Recipe+Ingredients Data")
             # for each ingredient_id create a RecipeIngredient entry
-            for ingredient_to_add in ingredients_to_add:
+            for ingredient_to_add in ingredients_to_add["saved"]:
                 current_app.logger.debug(f"Adding ingredient to recipe_ingredient -> {ingredient_to_add}")
                 
                 recipe_ingredient = RecipeIngredient(

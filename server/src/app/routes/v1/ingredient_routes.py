@@ -46,7 +46,9 @@ def add_ingredients(ingredients):
     """
     current_app.logger.debug("---------- Starting Add Ingredient Method ----------")
     current_app.logger.debug(f"Getting ids for -> {ingredients}")
-    ingredients_to_return = []
+    ingredients_saved = []
+    ingredients_failed = []
+
 
     # map over ingredients and check if it has an id
     for ingredient_data in ingredients:
@@ -60,7 +62,7 @@ def add_ingredients(ingredients):
         if ingredient_id and Ingredient.query.get(ingredient_id):
             existing = Ingredient.query.get(ingredient_id)
             current_app.logger.debug(f"Existing true so adding id -> {existing.id}")
-            ingredients_to_return.append(existing)
+            ingredients_saved.append(existing)
         else:
             # add ingredient to database and get its UUID for use on recipe
             # ingredient_data from the recipe includes amount and unit that is not stored on the ingredient table
@@ -73,17 +75,21 @@ def add_ingredients(ingredients):
             try:
                 db.session.add(ingredient)
                 db.session.commit()
+                current_app.logger.debug(f"Added -> {ingredient.id}")
+                ingredients_saved.append(ingredient)
             except SQLAlchemyError as sqle:
                 db.session.rollback()
                 current_app.logger.error(f"SQLAlchemyError writing to db: {str(sqle)}")
-                abort(500, message=f"An error occurred writing to the db")
+                ingredients_failed.append(ingredient)
             except Exception as e:
                 db.session.rollback()
                 current_app.logger.error(f"Exception writing to db: {str(e)}")
-                abort(500, message=f"An error occurred writing to the db")
+                ingredients_failed.append(ingredient)
 
-            current_app.logger.debug(f"Added -> {ingredient.id}")
-            ingredients_to_return.append(ingredient)
-    
+    current_app.logger.debug(f"Returning failed -> {ingredients_failed}")
+    current_app.logger.debug(f"Returning saved -> {ingredients_saved}")
     current_app.logger.debug("---------- Finished Add Ingredient Method ----------")
-    return ingredients_to_return
+    return {
+        "saved": ingredients_saved,
+        "failed": ingredients_failed
+    }

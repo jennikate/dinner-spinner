@@ -12,6 +12,7 @@ from uuid import UUID
 
 from src.app.schemas.ingredients import IngredientResponseSchema
 from src.app.routes.v1.ingredient_routes import add_ingredients
+from tests.helpers import serialize_ingredients
 
 # =====================================
 #  Body
@@ -23,18 +24,24 @@ class TestAddIngredientStaticMethod:
         Tests the static method adds ingredients to the db
         """
         ingredients = [
-            {
-                "ingredient_name": "Milk"
-            }, 
-            {
-                "ingredient_name": "Eggs"
-            }
+            { "ingredient_name": "Milk" }, 
+            { "ingredient_name": "Eggs" }
         ]
 
-        result = add_ingredients(ingredients)
-        names = [r.ingredient_name for r in result]
+        response = add_ingredients(ingredients)
 
-        assert names == ["Milk", "Eggs"]
+        expected_response = {
+            "failed": [], 
+            "saved": [
+                { "ingredient_name": "Milk" },
+                { "ingredient_name": "Eggs" }
+            ]    
+        }
+
+        assert {
+            "saved": serialize_ingredients(response["saved"]),
+            "failed": serialize_ingredients(response["failed"])
+        } == expected_response
 
 
 @pytest.mark.usefixtures("seeded_ingredients")
@@ -60,17 +67,24 @@ class TestAddIngredientStaticMethodWithExisting:
             }
         ]
 
-        result = add_ingredients(ingredients)
+        response = add_ingredients(ingredients)
 
         # check we didn't create a NEW version of the existing ingredient
-        for item in result:
+        for item in response["saved"]:
             if item.ingredient_name == seeded["ingredient_name"]:
                 assert item.id == UUID(seeded["ingredient_id"])
 
-        # check it returns ALL ingredients
-        names = [r.ingredient_name for r in result]
-        assert names == [
-            seeded["ingredient_name"],
-            "Milk",
-            "Eggs"
-        ]
+        expected_response = {
+            "failed": [], 
+            "saved": [
+                { "ingredient_name": seeded["ingredient_name"] },
+                { "ingredient_name": "Milk" },
+                { "ingredient_name": "Eggs" }
+            ]    
+        }
+
+        assert {
+            "saved": serialize_ingredients(response["saved"]),
+            "failed": serialize_ingredients(response["failed"])
+        } == expected_response
+
