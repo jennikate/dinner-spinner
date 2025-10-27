@@ -30,5 +30,5 @@ class Unit(db.Model):
     recipe_ingredients = db.relationship('RecipeIngredient', back_populates='unit')
 
     def __repr__(self):
-        return f"<unit: {self.unit_name}>"
+        return f"<unit: {self.unit_name}, abbreviation {self.abbreviation}>"
     

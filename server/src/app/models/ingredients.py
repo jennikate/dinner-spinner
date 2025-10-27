@@ -13,6 +13,9 @@ from ..extensions import db
 #  Body
 # =====================================
 
+# NOTE NOTE : IngredientType is not implemented other than the model
+# It's currently optional on the Ingredient model
+# and will not be implemented in v0.1
 class IngredientType(db.Model):
     """
     SQLAlchemy model for the ingredient_type table

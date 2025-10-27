@@ -120,7 +120,7 @@ def seeded_recipes(app, db):
         db.session.add_all(recipes)
         db.session.commit()
 
-        # Re-query recipes to ensure they are fully loaded and attached
+        # ----> Re-query recipes to ensure they are fully loaded and attached
         recipes = db.session.query(Recipe).options(
             joinedload(Recipe.recipe_ingredients)
             .joinedload(RecipeIngredient.ingredient),
@@ -154,7 +154,7 @@ def large_seeded_recipes(app, db):
         db.session.add_all(recipes)
         db.session.commit()
 
-        # Re-query recipes to ensure they are fully loaded and attached
+        # ----> Re-query recipes to ensure they are fully loaded and attached
         # This is needed because the .commit ends the session and detaches objects
         # and they can no longer be reliably accessed in tests
         # joinedload ensures recipe_ingredients and their nested ingredient/unit are eagerly loaded

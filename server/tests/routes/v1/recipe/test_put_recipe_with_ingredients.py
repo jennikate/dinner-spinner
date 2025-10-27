@@ -168,6 +168,39 @@ class TestPutRecipeWithIngredients:
             expected_status = 200
         )
 
+
+    # def test_put_recipe_change_ingredients(self, client, seeded_recipes_with_ingredients):
+    #     recipe = seeded_recipes_with_ingredients[0]
+
+    #     updated_recipe = {
+    #         "recipe_name": recipe.recipe_name,
+    #         "instructions": recipe.instructions,
+    #         "notes": recipe.notes,
+    #         "recipe_ingredients": [
+    #             {"ingredient_name": "salmon", "amount": 1.0},
+    #             {"ingredient_name": "rice", "amount": 3.0}
+    #         ]
+    #     }
+    #     print(f"updated -> {updated_recipe}")
+
+    #     expected_put_response = {
+    #         **updated_recipe,
+    #         "recipe_id": str(recipe.id), 
+    #         "recipe_ingredients": [
+    #             {"amount": 1.0, "ingredient_name": "salmon"}, 
+    #             {"amount": 3.0, "ingredient_name": "rice"}
+    #         ]
+    #     }
+
+    #     assert_recipe_update(
+    #         client=client, 
+    #         expected_response=expected_put_response, 
+    #         recipe_id=str(recipe.id), 
+    #         updated_recipe=updated_recipe, 
+    #         expected_status = 200
+    #     )
+
+
     def test_put_recipe_by_id_nothing_changed(self, client, seeded_recipes_with_ingredients):
         """
         Test that if nothing changes, we still return a 200
