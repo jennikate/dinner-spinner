@@ -71,6 +71,22 @@ class RecipeResource(MethodView):
         """
         current_app.logger.debug("---------- Starting Post Recipe ----------")
 
+        current_app.logger.debug("--> Checking Ingredients")
+        if new_data.get("ingredients"):
+            current_app.logger.debug("--> Creating Ingredients")
+            current_app.logger.debug(f"passing the following to add_ingredients -> {new_data["ingredients"]}")
+            ingredients_to_add = add_ingredients(new_data["ingredients"])
+            current_app.logger.debug(f"ingredients to add -> {ingredients_to_add}")
+            print(f"ingredients to add -> {ingredients_to_add}")
+            
+            current_app.logger.debug("--> Checking for ingredient failures")
+            current_app.logger.debug(f"Failed ingredients: {ingredients_to_add["failed"]}")
+            if ingredients_to_add["failed"] != []:
+                mapped_failures = []
+                for ingredient_to_add in ingredients_to_add["failed"]:
+                    mapped_failures.append(ingredient_to_add)
+                abort(422, message=f"Failed to create all ingredients, review and try again. Failed: {mapped_failures}") 
+
         current_app.logger.debug(f"--> Creating Recipe")
         # validation is set on the schema and run via the 
         # @blp.arguements command, erroring out before
@@ -88,16 +104,9 @@ class RecipeResource(MethodView):
         save_to_db(recipe)
         current_app.logger.debug(f"Recipe added: {recipe}")
 
-
-        current_app.logger.debug("--> Checking Ingredients")
+        current_app.logger.debug("--> Creating Recipe+Ingredients Data")
+        # for each ingredient_id create a RecipeIngredient entry
         if new_data.get("ingredients"):
-            current_app.logger.debug("--> Creating Ingredients")
-            current_app.logger.debug(f"passing the following to add_ingredients -> {new_data["ingredients"]}")
-            ingredients_to_add = add_ingredients(new_data["ingredients"])
-            current_app.logger.debug(f"ingredients to add -> {ingredients_to_add}")
-
-            current_app.logger.debug("--> Creating Recipe+Ingredients Data")
-            # for each ingredient_id create a RecipeIngredient entry
             for ingredient_to_add in ingredients_to_add["saved"]:
                 current_app.logger.debug(f"Adding ingredient to recipe_ingredient -> {ingredient_to_add}")
                 
