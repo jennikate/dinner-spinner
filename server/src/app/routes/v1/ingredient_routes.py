@@ -53,16 +53,26 @@ def add_ingredients(ingredients):
     # map over ingredients and check if it has an id
     for ingredient_data in ingredients:
         current_app.logger.debug(f"Checking -> {ingredient_data}")
+        # convert everything to lowercase to start with
+        for value in ingredient_data:
+            ingredient_data[value] = ingredient_data[value].lower()
+
         # use .get id here because not all ingredients have this key
         # if we use ingredient["id"] it will return a key error when the key doesn't exist
         ingredient_id = ingredient_data.get("id")
+        ingredient_name = ingredient_data.get("ingredient_name")
         current_app.logger.debug(f"ID returned -> {ingredient_id}")
-
         # only if it exists can we append it to the list, otherwise we treat it as a new ingredient
         if ingredient_id and Ingredient.query.get(ingredient_id):
             existing = Ingredient.query.get(ingredient_id)
-            current_app.logger.debug(f"Existing true so adding id -> {existing.id}")
+            current_app.logger.debug(f"ID exists true so adding id -> {existing.id}")
             ingredients_saved.append(existing)
+
+        elif ingredient_name and db.session.query(Ingredient).filter(Ingredient.ingredient_name == ingredient_name).first():
+            existing = db.session.query(Ingredient).filter(Ingredient.ingredient_name == ingredient_name).first()
+            current_app.logger.debug(f"Name exists so adding that name's id -> {existing.id}")
+            ingredients_saved.append(existing)
+
         else:
             # add ingredient to database and get its UUID for use on recipe
             # ingredient_data from the recipe includes amount and unit that is not stored on the ingredient table
