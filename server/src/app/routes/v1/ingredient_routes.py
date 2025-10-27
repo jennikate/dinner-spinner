@@ -82,7 +82,7 @@ def add_ingredients(ingredients):
                 current_app.logger.error(f"Exception writing to db: {str(e)}")
                 abort(500, message=f"An error occurred writing to the db")
 
-            current_app.logger.debug(f"Added -> {ingredient}")
+            current_app.logger.debug(f"Added -> {ingredient.id}")
             ingredients_to_return.append(ingredient)
     
     current_app.logger.debug("---------- Finished Add Ingredient Method ----------")

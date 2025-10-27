@@ -92,6 +92,7 @@ class RecipeResource(MethodView):
         current_app.logger.debug("--> Checking Ingredients")
         if new_data.get("ingredients"):
             current_app.logger.debug("--> Creating Ingredients")
+            current_app.logger.debug(f"passing the following to add_ingredients -> {new_data["ingredients"]}")
             ingredients_to_add = add_ingredients(new_data["ingredients"])
             current_app.logger.debug(f"ingredients to add -> {ingredients_to_add}")
 

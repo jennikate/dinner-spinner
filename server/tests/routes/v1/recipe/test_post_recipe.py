@@ -28,8 +28,6 @@ class TestPostRecipe:
         }
 
         assert response.status_code == 201
-        print(f"data: {data}")
-        print(f"expected_response: {expected_response}")
         assert data == expected_response
 
 

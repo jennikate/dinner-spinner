@@ -271,3 +271,31 @@ def seeded_recipes_with_ingredients(app, db):
         ).all()
 
         return recipes
+    
+
+@pytest.fixture(scope="function")
+def seeded_ingredients(app, db):
+    with app.app_context():
+        # ----> Clear all tables to ensure test isolation
+        db.session.remove()
+        for table in reversed(db.metadata.sorted_tables):
+            db.session.execute(table.delete())
+        db.session.commit()
+
+        ingredients = [
+            Ingredient(
+                ingredient_name="Squash"
+                # ingredient_type to be added in future
+            ),
+            Ingredient(
+                ingredient_name="Sushi rice"
+            )
+        ]
+
+        db.session.add_all(ingredients)
+        db.session.commit()
+
+        #  ----> Re-query to load all information
+        ingredients = db.session.query(Ingredient).all()
+
+    return ingredients

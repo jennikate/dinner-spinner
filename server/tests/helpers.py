@@ -66,8 +66,6 @@ def assert_recipe_update(client, expected_response, recipe_id, updated_recipe, e
 
     # Perform the update
     update_response = client.put(f"/v1/recipes/{recipe_id}", json=updated_recipe)
-    print(f"response -> {update_response.get_json()}")
-    print(f"expected -> {expected_response}")
 
     # # Assert put code and response
     assert update_response.status_code == expected_status
