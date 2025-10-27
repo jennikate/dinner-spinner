@@ -43,6 +43,31 @@ class TestAddIngredientStaticMethod:
             "failed": serialize_ingredients(response["failed"])
         } == expected_response
 
+    
+    def test_add_new_ingredient_with_invalid_id(self):
+        """
+        Tests the static method adds ingredients to the db
+        """
+        ingredients = [
+            { "id": UUID("11111111-6ce2-48ca-a262-04036209b03c"), "ingredient_name": "Milk" }, 
+            { "ingredient_name": "Eggs" }
+        ]
+
+        response = add_ingredients(ingredients)
+
+        expected_response = {
+            "failed": [], 
+            "saved": [
+                { "ingredient_name": "Milk" },
+                { "ingredient_name": "Eggs" }
+            ]    
+        }
+
+        assert {
+            "saved": serialize_ingredients(response["saved"]),
+            "failed": serialize_ingredients(response["failed"])
+        } == expected_response
+
 
 @pytest.mark.usefixtures("seeded_ingredients")
 class TestAddIngredientStaticMethodWithExisting:   

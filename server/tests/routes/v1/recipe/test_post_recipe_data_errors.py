@@ -34,6 +34,109 @@ class TestPostRecipeWithErrors:
         assert response.status_code == 422
         assert data == expected_response
 
+    def test_post_recipe_null_ingredient(self, client, base_recipe):
+        """
+        Tests only the required fields are sent.
+        """
+        data_to_post = {
+            **base_recipe, # unpack (spread operator)
+            "notes": None,
+            "ingredients": [
+                { "ingredient_name": None },
+            ]
+        }
+
+        response = client.post("/v1/recipes", json=data_to_post)
+        response_data = response.get_json()
+
+        expected_response = {
+            "code": 422,
+            "errors": {
+                "json": {
+                    "ingredients": {
+                        "0": {
+                            "ingredient_name": [
+                                "Field may not be null."
+                            ]
+                        }
+                    }
+                }
+            },
+            "status": "Unprocessable Entity"
+        }
+
+        assert response.status_code == 422
+        assert response_data == expected_response
+
+    # def test_post_recipe_short_ingredient(self, client, base_recipe):
+    #     """
+    #     Tests only the required fields are sent.
+    #     """
+    #     data_to_post = {
+    #         **base_recipe, # unpack (spread operator)
+    #         "notes": None,
+    #         "ingredients": [
+    #             { "ingredient_name": "" },
+    #         ]
+    #     }
+
+    #     response = client.post("/v1/recipes", json=data_to_post)
+    #     response_data = response.get_json()
+
+    #     expected_response = {
+    #         "code": 422,
+    #         "errors": {
+    #             "json": {
+    #                 "ingredients": {
+    #                     "0": {
+    #                         "ingredient_name": [
+    #                             "Field may not be null."
+    #                         ]
+    #                     }
+    #                 }
+    #             }
+    #         },
+    #         "status": "Unprocessable Entity"
+    #     }
+
+    #     assert response.status_code == 422
+    #     assert response_data == expected_response
+
+    
+    # def test_post_recipe_long_ingredient(self, client, base_recipe):
+    #     """
+    #     Tests only the required fields are sent.
+    #     """
+    #     data_to_post = {
+    #         **base_recipe, # unpack (spread operator)
+    #         "notes": None,
+    #         "ingredients": [
+    #             { "ingredient_name": "I am longer than sixty four characters. I am longer than sixty four characters" }
+    #         ]
+    #     }
+
+    #     response = client.post("/v1/recipes", json=data_to_post)
+    #     response_data = response.get_json()
+
+    #     expected_response = {
+    #         "code": 422,
+    #         "errors": {
+    #             "json": {
+    #                 "ingredients": {
+    #                     "0": {
+    #                         "ingredient_name": [
+    #                             "Field may not be null."
+    #                         ]
+    #                     }
+    #                 }
+    #             }
+    #         },
+    #         "status": "Unprocessable Entity"
+    #     }
+
+    #     assert response.status_code == 422
+    #     assert response_data == expected_response
+
 
     def test_post_recipe_invalid_instruction_keys(self, client):
         payload = {
