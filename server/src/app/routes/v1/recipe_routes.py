@@ -74,14 +74,7 @@ class RecipeResource(MethodView):
         if new_data.get("ingredients"):
             current_app.logger.debug("--> Creating Ingredients")
             ingredients_to_add = IngredientService.save_ingredients(new_data["ingredients"])
-            
-            # current_app.logger.debug("--> Checking for ingredient failures")
-            # current_app.logger.debug(f"Failed ingredients: {ingredients_to_add["failed"]}")
-            # if ingredients_to_add["failed"] != []:
-            #     mapped_failures = []
-            #     for ingredient_to_add in ingredients_to_add["failed"]:
-            #         mapped_failures.append(ingredient_to_add)
-            #     abort(422, message=f"Failed to create all ingredients, review and try again. Failed: {mapped_failures}") 
+            # if any failures to save ingredient to db occur, save_ingredient service aborts with message to client
 
         current_app.logger.debug(f"--> Creating Recipe")
         # validation is set on the schema and run via the 
@@ -100,7 +93,7 @@ class RecipeResource(MethodView):
 
         if new_data.get("ingredients"):
             current_app.logger.debug("--> Creating Recipe+Ingredients Data")
-            IngredientService.add_ingredients_to_recipe(ingredients_to_add["saved"], recipe.id)
+            IngredientService.add_ingredients_to_recipe(ingredients_to_add, recipe.id)
 
         current_app.logger.debug("---------- Finished Post Recipe ----------")
         return recipe

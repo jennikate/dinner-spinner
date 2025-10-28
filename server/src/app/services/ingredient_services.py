@@ -96,13 +96,9 @@ class IngredientService:
                 mapped_failures.append(schema.dump(ingredient))
             abort(422, message=f"Failed to create all ingredients, review and try again. Failed: {mapped_failures}") 
 
-        current_app.logger.debug(f"Returning failed -> {ingredients_failed}")
         current_app.logger.debug(f"Returning saved -> {ingredients_saved}")
         current_app.logger.debug("---------- Finished Add Ingredient Method ----------")
-        return {
-            "saved": ingredients_saved,
-            "failed": ingredients_failed
-        }
+        return ingredients_saved
 
     @staticmethod
     def add_ingredients_to_recipe(ingredients, recipe_id):
