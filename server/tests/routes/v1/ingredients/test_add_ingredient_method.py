@@ -71,7 +71,7 @@ class TestAddIngredientStaticMethod:
 
 @pytest.mark.usefixtures("seeded_ingredients")
 class TestAddIngredientStaticMethodWithExisting:   
-    def test_add_existing_ingredient(self, seeded_ingredients):
+    def test_add_existing_ingredient_by_id(self, seeded_ingredients):
         """
         Tests the static method doesn't readd an existing ingredient when ID provided
         """
@@ -113,3 +113,44 @@ class TestAddIngredientStaticMethodWithExisting:
             "failed": serialize_ingredients(response["failed"])
         } == expected_response
 
+
+    def test_add_existing_ingredient_by_string(self, seeded_ingredients):
+        """
+        Tests the static method doesn't readd an existing ingredient when ID provided
+        """
+        # Get an ingredient
+        schema = IngredientResponseSchema() # make instance of the class
+        seeded = schema.dump(seeded_ingredients[0])
+
+        ingredients = [
+            {
+               "ingredient_name": seeded["ingredient_name"]
+            },
+            {
+                "ingredient_name": "Milk"
+            }, 
+            {
+                "ingredient_name": "Eggs"
+            }
+        ]
+
+        response = add_ingredients(ingredients)
+
+        # check we didn't create a NEW version of the existing ingredient
+        for item in response["saved"]:
+            if item.ingredient_name == seeded["ingredient_name"]:
+                assert item.id == UUID(seeded["ingredient_id"])
+
+        expected_response = {
+            "failed": [], 
+            "saved": [
+                { "ingredient_name": seeded["ingredient_name"].lower() },
+                { "ingredient_name": "milk" },
+                { "ingredient_name": "eggs" }
+            ]    
+        }
+
+        assert {
+            "saved": serialize_ingredients(response["saved"]),
+            "failed": serialize_ingredients(response["failed"])
+        } == expected_response
