@@ -25,7 +25,7 @@ from ...models.ingredients import Ingredient
 from ...models.recipe_ingredients import RecipeIngredient
 from ...models.recipes import Recipe
 from ... schemas.generic import ErrorSchema, MessageSchema
-from ...schemas.recipes import RecipeCreateSchema, RecipeQuerySchema, RecipeResponseSchema, RecipeUpdateSchema
+from ...schemas.recipes import RecipeCreateSchema, RecipePaginatedQuerySchema, RecipeResponseSchema, RecipeUpdateSchema
 from ...services.db_services import DbService
 from ...services.ingredient_services import IngredientService
 
@@ -99,7 +99,7 @@ class RecipeResource(MethodView):
         return recipe
 
 
-    @blp.arguments(RecipeQuerySchema, location="query")
+    @blp.arguments(RecipePaginatedQuerySchema, location="query")
     @blp.response(200, RecipeResponseSchema(many=True))
     # @blp.paginate() # used if letting smorest handle pagination
     def get(self, args):
@@ -109,7 +109,7 @@ class RecipeResource(MethodView):
         Returns all recipes, paginated
         """
         current_app.logger.debug("---------- Starting Get Recipes ----------")
-        current_app.logger.debug(f"Getting jobs with args: {args}")
+        current_app.logger.debug(f"Getting recipes with args: {args}")
 
         # extract pagination args
         current_app.logger.debug(f"Max per page -> {MAX_PER_PAGE}")

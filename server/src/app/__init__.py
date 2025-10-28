@@ -14,6 +14,7 @@ from flask import Flask
 from .config import config
 from .extensions import api, db, migrate
 from .routes.v1.recipe_routes import blp as RecipeBlueprint
+from .routes.v1.random_return_routes import blp as RandomRecipesBlueprint
 from .models import * # Import models so they are registered with SQLAlchemy
 
 
@@ -24,6 +25,7 @@ def register_blueprints(api, app):
     app.logger.debug("---------- Starting register_blueprints ----------")
     
     api.register_blueprint(RecipeBlueprint)
+    api.register_blueprint(RandomRecipesBlueprint)
 
     app.logger.debug("---------- Finished register_blueprints ----------")
 

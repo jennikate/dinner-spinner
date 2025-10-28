@@ -96,7 +96,7 @@ class BaseRecipeSchema(Schema):
 # ------------------
 # QUERIES
 # ------------------       
-class RecipeQuerySchema(Schema):
+class RecipePaginatedQuerySchema(Schema):
     page = fields.Int(
         load_default=1, # used if page is not in request
         metadata={
@@ -186,6 +186,24 @@ class RecipeResponseSchema(BaseRecipeSchema):
     # Include the nested RecipeIngredient data
     recipe_ingredients = fields.Nested(BaseRecipeIngredientSchema, many=True)
     # ingredients = fields.Nested(BaseRecipeIngredientSchema, many=True)
+
+
+# Only returns the ID and name (thumbnail if I do images in future)
+# so user can see a list, and can click into each to get the full recipe
+class RandomRecipeListSchema():
+    class Meta:
+        model = Recipe
+        load_instance = True
+        include_fk = True  # there are fks
+
+    id = fields.UUID(dump_only=True, data_key="recipe_id")
+    recipe_name = fields.Str(
+        required=True, 
+        metadata={
+            "description": "The name of the recipe", 
+            "example": "Beef Goulash"
+        }
+    )
 
 
 # ------------------
