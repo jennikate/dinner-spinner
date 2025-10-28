@@ -1,0 +1,88 @@
+"""
+Services related to ingredients
+"""
+
+# =====================================
+#  Imports
+# =====================================
+
+from flask import current_app
+from sqlalchemy.exc import SQLAlchemyError # to catch db errors
+
+from ..extensions import db
+from ..models.ingredients import Ingredient
+
+
+
+# =====================================
+#  Body
+# =====================================
+
+# Collecting within a class for clarity
+class IngredientService:
+    @staticmethod
+    def save_ingredients(ingredients):
+        """
+        Adds new ingredients to the database if they don't already exist,
+        and returns a list of ingredient IDs.
+        """
+        current_app.logger.debug("---------- Starting Add Ingredient Method ----------")
+        current_app.logger.debug(f"Getting ids for -> {ingredients}")
+        ingredients_saved = []
+        ingredients_failed = []
+
+
+        # map over ingredients and check if it has an id
+        for ingredient_data in ingredients:
+            current_app.logger.debug(f"Checking -> {ingredient_data}")
+            # convert strings to lowercase to start with
+            for value in ingredient_data:  
+                if type(value) == str and value != 'id':
+                    ingredient_data[value] = ingredient_data[value].lower()
+
+            # use .get id here because not all ingredients have this key
+            # if we use ingredient["id"] it will return a key error when the key doesn't exist
+            ingredient_id = ingredient_data.get("id")
+            ingredient_name = ingredient_data.get("ingredient_name")
+            current_app.logger.debug(f"ID returned -> {ingredient_id}, for NAME -> {ingredient_name}")
+            # only if it exists can we append it to the list, otherwise we treat it as a new ingredient
+            if ingredient_id and Ingredient.query.get(ingredient_id):
+                existing = Ingredient.query.get(ingredient_id)
+                current_app.logger.debug(f"ID exists true so adding id -> {existing.id}")
+                ingredients_saved.append(existing)
+
+            elif ingredient_name and db.session.query(Ingredient).filter(Ingredient.ingredient_name == ingredient_name).first():
+                existing = db.session.query(Ingredient).filter(Ingredient.ingredient_name == ingredient_name).first()
+                current_app.logger.debug(f"Name exists so adding that name's id -> {existing.id}")
+                ingredients_saved.append(existing)
+
+            else:
+                # add ingredient to database and get its UUID for use on recipe
+                # ingredient_data from the recipe includes amount and unit that is not stored on the ingredient table
+                # so we need to remove these keys before creating the Ingredient object
+                ingredient_data.pop("amount", None)
+                ingredient_data.pop("unit", None)
+                ingredient = Ingredient(**ingredient_data)
+                current_app.logger.debug(f"Adding new ingredient to database -> {ingredient}")
+
+                try:
+                    db.session.add(ingredient)
+                    db.session.commit()
+                    current_app.logger.debug(f"Added -> {ingredient.id}")
+                    ingredients_saved.append(ingredient)
+                except SQLAlchemyError as sqle:
+                    db.session.rollback()
+                    current_app.logger.error(f"SQLAlchemyError writing to db: {str(sqle)}")
+                    ingredients_failed.append(ingredient)
+                except Exception as e:
+                    db.session.rollback()
+                    current_app.logger.error(f"Exception writing to db: {str(e)}")
+                    ingredients_failed.append(ingredient)
+
+        current_app.logger.debug(f"Returning failed -> {ingredients_failed}")
+        current_app.logger.debug(f"Returning saved -> {ingredients_saved}")
+        current_app.logger.debug("---------- Finished Add Ingredient Method ----------")
+        return {
+            "saved": ingredients_saved,
+            "failed": ingredients_failed
+        }

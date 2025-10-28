@@ -27,8 +27,7 @@ from ...models.recipes import Recipe
 from ... schemas.generic import ErrorSchema, MessageSchema
 from ...schemas.recipes import RecipeCreateSchema, RecipeQuerySchema, RecipeResponseSchema, RecipeUpdateSchema
 from ...services.db_services import save_to_db
-
-from .ingredient_routes import add_ingredients
+from ...services.ingredient_services import IngredientService
 
 # For manually doing pagination without smorest see this helper function
 # currently am using smorest but keeping function for reference on how it works
@@ -74,8 +73,8 @@ class RecipeResource(MethodView):
         current_app.logger.debug("--> Checking Ingredients")
         if new_data.get("ingredients"):
             current_app.logger.debug("--> Creating Ingredients")
-            current_app.logger.debug(f"passing the following to add_ingredients -> {new_data["ingredients"]}")
-            ingredients_to_add = add_ingredients(new_data["ingredients"])
+            current_app.logger.debug(f"passing the following to save_ingredients -> {new_data["ingredients"]}")
+            ingredients_to_add = IngredientService.save_ingredients(new_data["ingredients"])
             
             current_app.logger.debug("--> Checking for ingredient failures")
             current_app.logger.debug(f"Failed ingredients: {ingredients_to_add["failed"]}")

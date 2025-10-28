@@ -11,7 +11,7 @@ import pytest
 from uuid import UUID
 
 from src.app.schemas.ingredients import IngredientResponseSchema
-from src.app.routes.v1.ingredient_routes import add_ingredients
+from src.app.services.ingredient_services import IngredientService
 from tests.helpers import serialize_ingredients
 
 # =====================================
@@ -28,7 +28,7 @@ class TestAddIngredientStaticMethod:
             { "ingredient_name": "Eggs" }
         ]
 
-        response = add_ingredients(ingredients)
+        response = IngredientService.save_ingredients(ingredients)
 
         expected_response = {
             "failed": [], 
@@ -53,7 +53,7 @@ class TestAddIngredientStaticMethod:
             { "ingredient_name": "Eggs" }
         ]
 
-        response = add_ingredients(ingredients)
+        response = IngredientService.save_ingredients(ingredients)
 
         expected_response = {
             "failed": [], 
@@ -81,7 +81,7 @@ class TestAddIngredientStaticMethodWithExisting:
 
         ingredients = [
             {
-                "id": UUID(seeded["ingredient_id"]), # add_ingredients can take an 'id' as a UUID
+                "id": UUID(seeded["ingredient_id"]), # save_ingredients can take an 'id' as a UUID
                 "ingredient_name": seeded["ingredient_name"]
             },
             {
@@ -92,7 +92,7 @@ class TestAddIngredientStaticMethodWithExisting:
             }
         ]
 
-        response = add_ingredients(ingredients)
+        response = IngredientService.save_ingredients(ingredients)
 
         # check we didn't create a NEW version of the existing ingredient
         for item in response["saved"]:
@@ -134,7 +134,7 @@ class TestAddIngredientStaticMethodWithExisting:
             }
         ]
 
-        response = add_ingredients(ingredients)
+        response = IngredientService.save_ingredients(ingredients)
 
         # check we didn't create a NEW version of the existing ingredient
         for item in response["saved"]:

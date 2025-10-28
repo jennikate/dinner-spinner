@@ -15,7 +15,7 @@ import pytest
 from uuid import UUID
 
 from src.app.schemas.ingredients import IngredientResponseSchema
-from src.app.routes.v1.ingredient_routes import add_ingredients
+from src.app.services.ingredient_services import IngredientService
 from tests.helpers import serialize_ingredients
 
 # =====================================

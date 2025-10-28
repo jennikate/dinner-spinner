@@ -83,6 +83,11 @@ class IngredientCreateSchema(IngredientTypeSchema):
         }
     )
     
+    # NOTE: ingredients created via /recipe do not his this validation
+    # as /recipe connects to the add ingredient static method
+    # It may be redundant to have this here
+    # TODO: refactor ingredient schema now we're using the static method
+    # and remove any unsused
     @validates("ingredient_name")
     def validate_ingredient_name(self, value, **kwargs):
         print(f"VALUE -> {value}")

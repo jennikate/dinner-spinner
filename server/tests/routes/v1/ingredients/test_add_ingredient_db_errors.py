@@ -11,7 +11,7 @@ import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.app.extensions import db as _db
-from src.app.routes.v1.ingredient_routes import add_ingredients
+from src.app.services.ingredient_services import IngredientService
 
 from tests.helpers import serialize_ingredients
 
@@ -32,7 +32,7 @@ class TestAddIngredientStaticMethodWithDbErrors:
             raise SQLAlchemyError("DB error")
         
         monkeypatch.setattr(_db.session, "commit", bad_commit)
-        response = add_ingredients(ingredients)
+        response = IngredientService.save_ingredients(ingredients)
 
         # We don't call abort on this method as we want to respond to user
         # with what failed to save so they can decide next step
@@ -63,7 +63,7 @@ class TestAddIngredientStaticMethodWithDbErrors:
             raise RuntimeError("Something went wrong!")
         
         monkeypatch.setattr(_db.session, "commit", bad_commit)
-        response = add_ingredients(ingredients)
+        response = IngredientService.save_ingredients(ingredients)
 
         expected_response = {
             "failed": [
