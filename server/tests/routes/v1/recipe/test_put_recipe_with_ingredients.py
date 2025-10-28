@@ -27,7 +27,11 @@ class TestPutRecipeWithIngredients:
                 {"step_number": 1,"instruction": "New first instruction"},
                 {"step_number": 2,"instruction": "New second instruction"}
             ],
-            "notes": "Adding some notes"
+            "notes": "Adding some notes",
+            "ingredients": [
+                {"ingredient_name": "SOY sauce"},
+                {"ingredient_name": "Juniper Berries"}
+            ]
         }
 
         expected_put_response = {
@@ -40,7 +44,7 @@ class TestPutRecipeWithIngredients:
             'notes': 'Adding some notes', 
             'recipe_ingredients': [
                 {'amount': 1.0, 'ingredient_name': 'soy sauce'}, 
-                {'amount': 1.0, 'ingredient_name': 'potato'}
+                {'amount': 1.0, 'ingredient_name': 'juniper berries'}
             ]
         }
         
@@ -171,24 +175,28 @@ class TestPutRecipeWithIngredients:
 
     def test_put_recipe_change_ingredients(self, client, seeded_recipes_with_ingredients):
         recipe = seeded_recipes_with_ingredients[0]
+        recipe_ingredient = recipe.recipe_ingredients[0]
 
         updated_recipe = {
             "recipe_name": recipe.recipe_name,
             "instructions": recipe.instructions,
             "notes": recipe.notes,
-            "recipe_ingredients": [
-                {"ingredient_name": "Salmon", "amount": 1.0},
-                {"ingredient_name": "Rice", "amount": 3.0}
+            "ingredients": [
+                {"ingredient_name": "SOY sauce"},
+                {"ingredient_name": "Juniper Berries"},
+                {"ingredient_id": recipe_ingredient.id, "ingredient_name": recipe_ingredient.ingredient_name}
             ]
         }
-        print(f"updated -> {updated_recipe}")
 
         expected_put_response = {
-            **updated_recipe,
-            "recipe_id": str(recipe.id), 
-            "recipe_ingredients": [
-                {"amount": 1.0, "ingredient_name": "salmon"}, 
-                {"amount": 3.0, "ingredient_name": "rice"}
+            'recipe_id': str(recipe.id), 
+            'recipe_name': recipe.recipe_name,
+            'instructions': recipe.instructions, 
+            'notes': recipe.notes,
+            'recipe_ingredients': [
+                {'amount': 1.0, 'ingredient_name': 'soy sauce'}, 
+                {'amount': 1.0, 'ingredient_name': 'juniper berries'},
+                {'amount': recipe_ingredient.amount, 'ingredient_name': recipe_ingredient.ingredient_name}
             ]
         }
 

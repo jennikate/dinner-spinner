@@ -66,16 +66,17 @@ def assert_recipe_update(client, expected_response, recipe_id, updated_recipe, e
 
     # Perform the update
     update_response = client.put(f"/v1/recipes/{recipe_id}", json=updated_recipe)
-
+    print(f"update res -> {update_response.get_json()}")
+    print(f"expect res -> {expected_response}")
     # # Assert put code and response
     assert update_response.status_code == expected_status
     assert update_response.get_json() == expected_response
 
-    # # get recipe from db
+    # get recipe from db
     # if update_response.status_code == 200:
     #     updated_response = client.get(f"/v1/recipes/{recipe_id}")
     #     updated_data = updated_response.get_json()
-    #     print(f"db response -> {updated_response}")
+    #     print(f"db response -> {updated_data}")
 
     #     assert updated_data == expected_response
 
