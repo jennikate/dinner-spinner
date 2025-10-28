@@ -16,10 +16,10 @@ from ....helpers import assert_recipe_update
 #  Body
 # =====================================
 
-@pytest.mark.usefixtures("seeded_recipes")
-class TestPutRecipe:
-    def test_put_recipe_all_fields_changed(self, client, seeded_recipes):
-        recipe_id = str(seeded_recipes[0].id)
+@pytest.mark.usefixtures("seeded_recipes_with_ingredients")
+class TestPutRecipeWithIngredients:
+    def test_put_recipe_all_fields_changed(self, client, seeded_recipes_with_ingredients):
+        recipe_id = str(seeded_recipes_with_ingredients[0].id)
 
         updated_recipe = {
             "recipe_name": "My updated simple recipe",
@@ -31,16 +31,19 @@ class TestPutRecipe:
         }
 
         expected_put_response = {
-            "recipe_id": recipe_id,
-            "instructions": [
-                {"step_number": 1,"instruction": "New first instruction"},
-                {"step_number": 2,"instruction": "New second instruction"}
-            ],
-            "notes": "Adding some notes",
-            "recipe_name": "My updated simple recipe",
-            "recipe_ingredients": []
+            'recipe_id': recipe_id, 
+            'recipe_name': 'My updated simple recipe',
+            'instructions': [
+                {'instruction': 'New first instruction', 'step_number': 1}, 
+                {'instruction': 'New second instruction', 'step_number': 2}
+            ], 
+            'notes': 'Adding some notes', 
+            'recipe_ingredients': [
+                {'amount': 1.0, 'ingredient_name': 'milk'}, 
+                {'amount': 1.0, 'ingredient_name': 'potato'}
+            ]
         }
-
+        
         assert_recipe_update(
             client=client, 
             expected_response=expected_put_response, 
@@ -50,8 +53,8 @@ class TestPutRecipe:
         )
     
 
-    def test_put_recipe_change_name(self, client, seeded_recipes):
-        recipe = seeded_recipes[0]
+    def test_put_recipe_change_name(self, client, seeded_recipes_with_ingredients):
+        recipe = seeded_recipes_with_ingredients[0]
         updated_recipe = {
             "recipe_name": "My updated simple recipe name",
             "instructions": recipe.instructions,
@@ -63,7 +66,10 @@ class TestPutRecipe:
             "instructions": recipe.instructions,
             "notes": recipe.notes,
             "recipe_name": "My updated simple recipe name",
-            "recipe_ingredients": []
+            'recipe_ingredients': [
+                {'amount': 1.0, 'ingredient_name': 'milk'}, 
+                {'amount': 1.0, 'ingredient_name': 'potato'}
+            ]
         }
 
         assert_recipe_update(
@@ -75,8 +81,8 @@ class TestPutRecipe:
         )
 
 
-    def test_put_recipe_change_note(self, client, seeded_recipes):
-        recipe = seeded_recipes[0]
+    def test_put_recipe_change_note(self, client, seeded_recipes_with_ingredients):
+        recipe = seeded_recipes_with_ingredients[0]
 
         updated_recipe = {
             "recipe_name": recipe.recipe_name,
@@ -88,8 +94,11 @@ class TestPutRecipe:
             "recipe_id": str(recipe.id),
             "instructions": recipe.instructions,
             "notes": "Adding a note now",
-            "recipe_name": recipe.recipe_name,
-            "recipe_ingredients": []
+            "recipe_name": recipe.recipe_name, 
+            'recipe_ingredients': [
+                {'amount': 1.0, 'ingredient_name': 'milk'}, 
+                {'amount': 1.0, 'ingredient_name': 'potato'}
+            ]
         }
 
         assert_recipe_update(
@@ -101,8 +110,8 @@ class TestPutRecipe:
         )
 
     
-    def test_put_recipe_change_note_to_null(self, client, seeded_recipes):
-        recipe = seeded_recipes[1] # has a notes field that is not none
+    def test_put_recipe_change_note_to_null(self, client, seeded_recipes_with_ingredients):
+        recipe = seeded_recipes_with_ingredients[1] # has a notes field that is not none
 
         updated_recipe = {
             "recipe_name": recipe.recipe_name,
@@ -114,8 +123,11 @@ class TestPutRecipe:
             "recipe_id": str(recipe.id),
             "instructions": recipe.instructions,
             "notes": None,
-            "recipe_name": recipe.recipe_name,
-            "recipe_ingredients": []
+            "recipe_name": recipe.recipe_name, 
+            'recipe_ingredients': [
+                {'amount': 1.0, 'ingredient_name': 'milk'}, 
+                {'amount': 1.0, 'ingredient_name': 'potato'}
+            ]
         }
 
         assert_recipe_update(
@@ -127,8 +139,8 @@ class TestPutRecipe:
         )
 
     
-    def test_put_recipe_change_instruction(self, client, seeded_recipes):
-        recipe = seeded_recipes[0]
+    def test_put_recipe_change_instruction(self, client, seeded_recipes_with_ingredients):
+        recipe = seeded_recipes_with_ingredients[0]
 
         updated_recipe = {
             "recipe_name": recipe.recipe_name,
@@ -141,8 +153,11 @@ class TestPutRecipe:
 
         expected_put_response = {
             **updated_recipe,
-            "recipe_id": str(recipe.id),
-            "recipe_ingredients": []
+            "recipe_id": str(recipe.id), 
+            'recipe_ingredients': [
+                {'amount': 1.0, 'ingredient_name': 'milk'}, 
+                {'amount': 1.0, 'ingredient_name': 'potato'}
+            ]
         }
 
         assert_recipe_update(
@@ -153,11 +168,44 @@ class TestPutRecipe:
             expected_status = 200
         )
 
-    def test_put_recipe_by_id_nothing_changed(self, client, seeded_recipes):
+
+    # def test_put_recipe_change_ingredients(self, client, seeded_recipes_with_ingredients):
+    #     recipe = seeded_recipes_with_ingredients[0]
+
+    #     updated_recipe = {
+    #         "recipe_name": recipe.recipe_name,
+    #         "instructions": recipe.instructions,
+    #         "notes": recipe.notes,
+    #         "recipe_ingredients": [
+    #             {"ingredient_name": "salmon", "amount": 1.0},
+    #             {"ingredient_name": "rice", "amount": 3.0}
+    #         ]
+    #     }
+    #     print(f"updated -> {updated_recipe}")
+
+    #     expected_put_response = {
+    #         **updated_recipe,
+    #         "recipe_id": str(recipe.id), 
+    #         "recipe_ingredients": [
+    #             {"amount": 1.0, "ingredient_name": "salmon"}, 
+    #             {"amount": 3.0, "ingredient_name": "rice"}
+    #         ]
+    #     }
+
+    #     assert_recipe_update(
+    #         client=client, 
+    #         expected_response=expected_put_response, 
+    #         recipe_id=str(recipe.id), 
+    #         updated_recipe=updated_recipe, 
+    #         expected_status = 200
+    #     )
+
+
+    def test_put_recipe_by_id_nothing_changed(self, client, seeded_recipes_with_ingredients):
         """
         Test that if nothing changes, we still return a 200
         """
-        recipe = seeded_recipes[0]
+        recipe = seeded_recipes_with_ingredients[0]
         updated_recipe = {
             "recipe_name": recipe.recipe_name,
             "instructions": recipe.instructions,
@@ -168,8 +216,11 @@ class TestPutRecipe:
             "recipe_id": str(recipe.id), 
             "instructions": recipe.instructions, 
             "notes": recipe.notes,
-            "recipe_name": recipe.recipe_name,
-            "recipe_ingredients": []
+            "recipe_name": recipe.recipe_name, 
+            'recipe_ingredients': [
+                {'amount': 1.0, 'ingredient_name': 'milk'}, 
+                {'amount': 1.0, 'ingredient_name': 'potato'}
+            ]
         }
 
         assert_recipe_update(

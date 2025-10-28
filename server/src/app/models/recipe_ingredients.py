@@ -24,9 +24,14 @@ class RecipeIngredient(db.Model):
     id = db.Column(Uuid(), primary_key=True, default=uuid4)
     amount = db.Column(db.Float, nullable=False)
 
-    recipe_id = db.Column(db.UUID, db.ForeignKey('recipes.id'), nullable=False)
-    ingredient_id = db.Column(db.UUID, db.ForeignKey('ingredients.id'), nullable=False)
-    unit_id = db.Column(db.UUID, db.ForeignKey('units.id'), nullable=False)
+    recipe_id = db.Column(db.UUID, db.ForeignKey('recipes.id', ondelete="CASCADE"))
+    ingredient_id = db.Column(db.UUID, db.ForeignKey('ingredients.id'))
+    unit_id = db.Column(db.UUID, db.ForeignKey('units.id'))
+
+    # We copy these over so if a user deletes an ingredient later it doesn't break existing recipes
+    # They can come and update these fields as part of updating ingredients on a recipe
+    ingredient_name = db.Column(db.String, nullable=False) # copied from ingredient table to preserve name at time of recipe creation
+    unit_name = db.Column(db.String, nullable=False) # copied from unit table to preserve name at time of recipe creation
 
     recipe = db.relationship('Recipe', back_populates='recipe_ingredients')
     ingredient = db.relationship('Ingredient', back_populates='recipe_ingredients')

@@ -11,11 +11,15 @@ import pytest
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import joinedload, sessionmaker, scoped_session
 
 from src.app import create_app, db as _db # _db to be clear this is the test instance
-from src.app.models.recipes import Recipe 
 from src.app.constants import MAX_PER_PAGE
+from src.app.models.ingredients import Ingredient 
+from src.app.models.recipes import Recipe 
+from src.app.models.recipe_ingredients import RecipeIngredient
+from src.app.models.units import Unit
+
 
 # =====================================
 # Configuration & setup
@@ -88,53 +92,210 @@ def session(app):
 
 @pytest.fixture(scope="function")
 def seeded_recipes(app, db):
-    recipes = [
-        Recipe(
-            recipe_name="My simple recipe",
-            instructions=[
-                {"step_number": 1,"instruction": "First thing you do is"},
-                {"step_number": 2,"instruction": "Second thing you do is"}
-            ]
-        ),
-        Recipe(
-            recipe_name="My other recipe",
-            instructions=[
-                {"step_number": 1,"instruction": "First thing you do is"},
-                {"step_number": 2,"instruction": "Second thing you do is"}
-            ],
-            notes="My sample note."
-        )
-    ]
-    # Make sure to add recipes within app context
     with app.app_context():
+        # ----> Clear all tables to ensure test isolation
+        db.session.remove()
+        for table in reversed(db.metadata.sorted_tables):
+            db.session.execute(table.delete())
+        db.session.commit()
+
+        recipes = [
+            Recipe(
+                recipe_name="My simple recipe",
+                instructions=[
+                    {"step_number": 1,"instruction": "First thing you do is"},
+                    {"step_number": 2,"instruction": "Second thing you do is"}
+                ]
+            ),
+            Recipe(
+                recipe_name="My other recipe",
+                instructions=[
+                    {"step_number": 1,"instruction": "First thing you do is"},
+                    {"step_number": 2,"instruction": "Second thing you do is"}
+                ],
+                notes="My sample note."
+            )
+        ]
+
         db.session.add_all(recipes)
         db.session.commit()
+
+        # ----> Re-query recipes to ensure they are fully loaded and attached
+        recipes = db.session.query(Recipe).options(
+            joinedload(Recipe.recipe_ingredients)
+            .joinedload(RecipeIngredient.ingredient),
+            joinedload(Recipe.recipe_ingredients)
+            .joinedload(RecipeIngredient.unit)
+        ).all()
+
     return recipes
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def large_seeded_recipes(app, db):
     """
-    Seed the database with 40 recipes for pagination testing.
+    Seed many recipes for pagination tests.
     """
-    recipes = []
-
-    for i in range(1, 41):  # 40 recipes
-        recipe = {
-            "recipe_name": f"Recipe {i}",
-            "instructions": [
-                {"step_number": 1, "instruction": f"Step 1 for Recipe {i}"},
-                {"step_number": 2, "instruction": f"Step 2 for Recipe {i}"}
-            ],
-            "notes": f"Sample note for Recipe {i}"
-        }
-        recipes.append(recipe)
-
-    # Insert into database
     with app.app_context():
-        recipe_objects = [Recipe(**r) for r in recipes]
-        db.session.add_all(recipe_objects)
+        # ----> Clear all tables to ensure test isolation
+        db.session.remove()
+        for table in reversed(db.metadata.sorted_tables):
+            db.session.execute(table.delete())
+        db.session.commit()
+        
+        recipes = [
+            Recipe(
+                recipe_name=f"Recipe {i+1}",
+                instructions=[{"step_number": 1, "instruction": "Do something"}]
+            )
+            for i in range(50)  # seed 50 recipes
+        ]
+
+        db.session.add_all(recipes)
         db.session.commit()
 
-    return recipe_objects  # return list of ORM objects for tests
+        # ----> Re-query recipes to ensure they are fully loaded and attached
+        # This is needed because the .commit ends the session and detaches objects
+        # and they can no longer be reliably accessed in tests
+        # joinedload ensures recipe_ingredients and their nested ingredient/unit are eagerly loaded
+        # making sure they're available to the tests without lazy loading issues
+        recipes = db.session.query(Recipe).options(
+            joinedload(Recipe.recipe_ingredients)
+            .joinedload(RecipeIngredient.ingredient),
+            joinedload(Recipe.recipe_ingredients)
+            .joinedload(RecipeIngredient.unit)
+        ).all()
 
+        return recipes
+
+
+@pytest.fixture(scope="function")
+def seeded_recipes_with_ingredients(app, db):
+    """
+    Seed recipes with ingredients and units. 
+    Each recipe can have a variable number of ingredients.
+    """
+    with app.app_context():
+        # ----> Clear all existing data (important for test isolation)
+        db.session.remove()
+        for table in reversed(db.metadata.sorted_tables):
+            db.session.execute(table.delete())
+        db.session.commit()
+
+        # ---->  Create Ingredients & Units
+        ingredient_defs = [
+            {"name": "milk"}, 
+            {"name": "potato"}, 
+            {"name": "pepper"}, 
+            {"name": "soy sauce"}
+        ]
+        ingredients = []
+        for i in ingredient_defs:
+            ing = Ingredient(ingredient_name=i["name"])
+            ingredients.append(ing)
+
+        # TODO: Create Units properly, this is sample hardcoded
+        # TODO: Add different amt values as currently everything hardcoded in the code
+        units = [Unit(unit_name="pint"), Unit(unit_name="small_item")]
+        db.session.add_all(ingredients + units)
+        db.session.commit()  # commit to get IDs
+
+        # ----> Define recipes
+        recipe_defs = [
+            {
+                "name": "My simple recipe",
+                "instructions": [
+                    {"step_number": 1, "instruction": "First thing you do is"},
+                    {"step_number": 2, "instruction": "Second thing you do is"}
+                ],
+                "ingredients": [
+                    {"ingredient": ingredients[0], "unit": units[0], "amount": 1},
+                    {"ingredient": ingredients[1], "unit": units[1], "amount": 1},
+                ],
+            },
+            {
+                "name": "My other recipe",
+                "instructions": [
+                    {"step_number": 1, "instruction": "First thing you do is"},
+                    {"step_number": 2, "instruction": "Second thing you do is"}
+                ],
+                "notes": "Sample note", # this one has the optional note
+                "ingredients": [
+                    {"ingredient": ingredients[0], "unit": units[0], "amount": 1},
+                    {"ingredient": ingredients[1], "unit": units[1], "amount": 1},
+                ]
+            },
+            {
+                "name": "My no ingredient recipe",
+                "instructions": [
+                    {"step_number": 1, "instruction": "First thing you do is"},
+                    {"step_number": 2, "instruction": "Second thing you do is"}
+                ],
+                "notes": "Sample note", # this one has the optional note
+                "ingredients": []  # no ingredients for this one
+            }
+        ]
+
+        #  ----> Create Recipe and RecipeIngredient objects
+        recipes = []
+        for rd in recipe_defs: # rd = recipe definition
+            r = Recipe(
+                recipe_name=rd["name"],
+                instructions=rd["instructions"],
+                notes=rd.get("notes")
+            )
+            db.session.add(r)
+            db.session.commit()  # commit to get recipe ID
+
+            # Attach ingredients
+            for ing_info in rd["ingredients"]: # ing_info = ingredient info
+                ri = RecipeIngredient(
+                    recipe=r,
+                    ingredient=ing_info["ingredient"],
+                    unit=ing_info["unit"],
+                    amount=ing_info["amount"],
+                    ingredient_name=ing_info["ingredient"].ingredient_name,
+                    unit_name=ing_info["unit"].unit_name
+                )
+                db.session.add(ri)
+            db.session.commit()
+
+            recipes.append(r)
+
+        #  ----> Re-query fully attached recipes with eager-loading
+        recipes = db.session.query(Recipe).options(
+            joinedload(Recipe.recipe_ingredients)
+            .joinedload(RecipeIngredient.ingredient),
+            joinedload(Recipe.recipe_ingredients)
+            .joinedload(RecipeIngredient.unit)
+        ).all()
+
+        return recipes
+    
+
+@pytest.fixture(scope="function")
+def seeded_ingredients(app, db):
+    with app.app_context():
+        # ----> Clear all tables to ensure test isolation
+        db.session.remove()
+        for table in reversed(db.metadata.sorted_tables):
+            db.session.execute(table.delete())
+        db.session.commit()
+
+        ingredients = [
+            Ingredient(
+                ingredient_name="Squash"
+                # ingredient_type to be added in future
+            ),
+            Ingredient(
+                ingredient_name="Sushi rice"
+            )
+        ]
+
+        db.session.add_all(ingredients)
+        db.session.commit()
+
+        #  ----> Re-query to load all information
+        ingredients = db.session.query(Ingredient).all()
+
+    return ingredients

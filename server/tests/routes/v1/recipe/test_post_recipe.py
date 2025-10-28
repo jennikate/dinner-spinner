@@ -6,7 +6,7 @@ Tests for the recipe & recipes endpoint resource in the `src.app.routes.v1/recip
 #  Imports
 # =====================================
 
-from ....fixtures import base_recipe
+from ....fixtures import base_recipe, base_recipe_with_ingredients, base_recipe_with_ingredients_response
 
 # =====================================
 #  Body
@@ -22,7 +22,25 @@ class TestPostRecipe:
 
         expected_response = {
             **base_recipe, # unpack (spread operator)
-            "id": data["id"], # UUID is generated
+            "recipe_id": data["recipe_id"], # UUID is generated
+            "notes": None,
+            "recipe_ingredients": []
+        }
+
+        assert response.status_code == 201
+        assert data == expected_response
+
+
+    def test_post_recipe_with_new_ingredients(self, client, base_recipe_with_ingredients, base_recipe_with_ingredients_response):
+        """
+        Tests only the required fields are sent.
+        """
+        response = client.post("/v1/recipes", json=base_recipe_with_ingredients)
+        data = response.get_json()
+
+        expected_response = {
+            **base_recipe_with_ingredients_response, # unpack (spread operator)
+            "recipe_id": data["recipe_id"], # UUID is generated
             "notes": None
         }
 
@@ -44,8 +62,9 @@ class TestPostRecipe:
 
         expected_response = {
             **base_recipe, # unpack (spread operator)
-            "id": data["id"], # UUID is generated
-            "notes": "I wrote some notes"
+            "recipe_id": data["recipe_id"], # UUID is generated
+            "notes": "I wrote some notes",
+            "recipe_ingredients": []
         }
 
         assert response.status_code == 201
@@ -74,11 +93,11 @@ class TestPostRecipe:
 
         expected_response = {
             **base_recipe, # unpack (spread operator)
-            "id": data["id"], # UUID is generated
-            "notes": None
+            "recipe_id": data["recipe_id"], # UUID is generated
+            "notes": None,
+            "recipe_ingredients": []
         }
 
         assert response.status_code == 201
         assert data == expected_response
-
 

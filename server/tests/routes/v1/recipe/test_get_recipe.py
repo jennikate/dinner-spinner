@@ -8,6 +8,8 @@ Tests for the recipe & recipes endpoint resource in the `src.app.routes.v1/recip
 
 import pytest
 
+from deepdiff import DeepDiff
+
 from src.app.schemas.recipes import RecipeResponseSchema
 
 from ....helpers import get_pagination_counts
@@ -54,7 +56,7 @@ class TestGetRecipe:
         mapped_recipes = [
             {
                 **recipe, # unpack -> list of dicts, one per Recipe object
-                "id": recipe["id"], # UUID is generated
+                "recipe_id": recipe["recipe_id"], # UUID is generated
                 "notes": recipe["notes"]
             } for recipe in sorted(recipes_data, key=lambda r: r["recipe_name"])
         ]
@@ -85,3 +87,46 @@ class TestGetRecipe:
         assert response.status_code == 200
         assert data == expected_response
             
+
+@pytest.mark.usefixtures("seeded_recipes_with_ingredients")
+class TestGetRecipeWithIngredients:
+    def test_get_all_recipes_with_ingredients(self, client, app, db, seeded_recipes_with_ingredients):
+        pagination_counts = get_pagination_counts(app, db)
+        response = client.get("/v1/recipes")
+        data = response.get_json()
+
+        schema = RecipeResponseSchema(many=True)
+        recipes_data = schema.dump(seeded_recipes_with_ingredients)  # list of dicts
+
+        mapped_recipes = [
+            {
+                **recipe, # unpack -> list of dicts, one per Recipe object
+            } for recipe in sorted(recipes_data, key=lambda r: r["recipe_name"])
+        ]
+
+        expected_response = {
+            "items": mapped_recipes[pagination_counts["recipe_number_start"]:pagination_counts["recipe_number_end"]], 
+            "page": 1,
+            "pages": pagination_counts["pages"],
+            "per_page": pagination_counts["per_page"],
+            "total": len(seeded_recipes_with_ingredients)
+        }
+
+        assert response.status_code == 200
+        # DeepDiff is a package that checks the JSON regardless of order - saves us writing it ourself
+        diff = DeepDiff(data, expected_response, ignore_order=True)
+        assert diff == {}, diff  # prints differences if not equal
+
+
+    def test_get_recipe_by_id_with_ingredients(self, client, seeded_recipes_with_ingredients):
+        recipe_id = str(seeded_recipes_with_ingredients[1].id)
+        response = client.get(f"/v1/recipes/{recipe_id}")
+        data = response.get_json()
+
+        expected_response = RecipeResponseSchema().dump(seeded_recipes_with_ingredients[1])
+        # make this into a basic dict based on schema so we can assert
+
+        assert response.status_code == 200
+        diff = DeepDiff(data, expected_response, ignore_order=True)
+        assert diff == {}, diff
+

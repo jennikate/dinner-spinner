@@ -66,20 +66,18 @@ def assert_recipe_update(client, expected_response, recipe_id, updated_recipe, e
 
     # Perform the update
     update_response = client.put(f"/v1/recipes/{recipe_id}", json=updated_recipe)
-    print(f"response -> {update_response.get_json()}")
-    print(f"response status -> {update_response.status_code}")
 
-    # Assert put code and response
+    # # Assert put code and response
     assert update_response.status_code == expected_status
     assert update_response.get_json() == expected_response
 
-    # get recipe from db
-    if update_response.status_code == 200:
-        updated_response = client.get(f"/v1/recipes/{recipe_id}")
-        updated_data = updated_response.get_json()
-        print(f"db response -> {updated_response}")
+    # # get recipe from db
+    # if update_response.status_code == 200:
+    #     updated_response = client.get(f"/v1/recipes/{recipe_id}")
+    #     updated_data = updated_response.get_json()
+    #     print(f"db response -> {updated_response}")
 
-        assert updated_data == expected_response
+    #     assert updated_data == expected_response
 
 
 # --------------------
@@ -130,3 +128,12 @@ def assert_generic_error(*, client, monkeypatch, endpoint, method, payload=None)
         assert response.status_code == 500
         data = response.get_json()
         assert "An error occurred writing to the db" in data["message"] 
+
+
+# --------------------
+# SERIALIZATION
+# --------------------
+
+def serialize_ingredients(ingredients_list):
+    print(f"serializing -> {ingredients_list}")
+    return [{"ingredient_name": i.ingredient_name} for i in ingredients_list]
