@@ -16,21 +16,23 @@ from ..extensions import db
 #  Body
 # =====================================
 
-@staticmethod
-def save_to_db(data_to_add):
-    """
-    Process standard saving to the database with error handling.
-    """
-    try:
-        db.session.add(data_to_add)
-        db.session.commit()
-    except SQLAlchemyError as sqle:
-        db.session.rollback()
-        current_app.logger.error(f"SQLAlchemyError writing to db: {str(sqle)}")
-        abort(500, message=f"An error occurred writing to the db")
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"Exception writing to db: {str(e)}")
-        abort(500, message=f"An error occurred writing to the db")
+class DbService:
+    @staticmethod
+    def save_to_db_abort_on_fail(data_to_add):
+        """
+        Process standard saving to the database with error handling.
+        """
+        try:
+            db.session.add(data_to_add)
+            db.session.commit()
+        except SQLAlchemyError as sqle:
+            db.session.rollback()
+            current_app.logger.error(f"SQLAlchemyError writing to db: {str(sqle)}")
+            abort(500, message=f"An error occurred writing to the db")
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Exception writing to db: {str(e)}")
+            abort(500, message=f"An error occurred writing to the db")
+        
+        return data_to_add
     
-    return data_to_add

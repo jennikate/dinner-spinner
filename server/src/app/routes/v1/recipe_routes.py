@@ -26,7 +26,7 @@ from ...models.recipe_ingredients import RecipeIngredient
 from ...models.recipes import Recipe
 from ... schemas.generic import ErrorSchema, MessageSchema
 from ...schemas.recipes import RecipeCreateSchema, RecipeQuerySchema, RecipeResponseSchema, RecipeUpdateSchema
-from ...services.db_services import save_to_db
+from ...services.db_services import DbService
 from ...services.ingredient_services import IngredientService
 
 # For manually doing pagination without smorest see this helper function
@@ -73,50 +73,34 @@ class RecipeResource(MethodView):
         current_app.logger.debug("--> Checking Ingredients")
         if new_data.get("ingredients"):
             current_app.logger.debug("--> Creating Ingredients")
-            current_app.logger.debug(f"passing the following to save_ingredients -> {new_data["ingredients"]}")
             ingredients_to_add = IngredientService.save_ingredients(new_data["ingredients"])
             
-            current_app.logger.debug("--> Checking for ingredient failures")
-            current_app.logger.debug(f"Failed ingredients: {ingredients_to_add["failed"]}")
-            if ingredients_to_add["failed"] != []:
-                mapped_failures = []
-                for ingredient_to_add in ingredients_to_add["failed"]:
-                    mapped_failures.append(ingredient_to_add)
-                abort(422, message=f"Failed to create all ingredients, review and try again. Failed: {mapped_failures}") 
+            # current_app.logger.debug("--> Checking for ingredient failures")
+            # current_app.logger.debug(f"Failed ingredients: {ingredients_to_add["failed"]}")
+            # if ingredients_to_add["failed"] != []:
+            #     mapped_failures = []
+            #     for ingredient_to_add in ingredients_to_add["failed"]:
+            #         mapped_failures.append(ingredient_to_add)
+            #     abort(422, message=f"Failed to create all ingredients, review and try again. Failed: {mapped_failures}") 
 
         current_app.logger.debug(f"--> Creating Recipe")
         # validation is set on the schema and run via the 
-        # @blp.arguements command, erroring out before
-        # code reaches here
+        # @blp.arguements command, erroring out before code reaches here
         current_app.logger.debug(f"Recipe new_data: {new_data}")
 
         # Ingredients are not added to the Recipe model directly
         # so we need to pop them out of the new_data dict
         recipe_data = new_data.copy()
         recipe_data.pop("ingredients", None) # if no ingredients exist return None, prevents errors for missing optional key (ingredients is optional)
-
         current_app.logger.debug(f"Recipe new_data post pop: {recipe_data}")
         recipe = Recipe(**recipe_data)
 
-        save_to_db(recipe)
+        DbService.save_to_db_abort_on_fail(recipe)
         current_app.logger.debug(f"Recipe added: {recipe}")
 
-        current_app.logger.debug("--> Creating Recipe+Ingredients Data")
-        # for each ingredient_id create a RecipeIngredient entry
         if new_data.get("ingredients"):
-            for ingredient_to_add in ingredients_to_add["saved"]:
-                current_app.logger.debug(f"Adding ingredient to recipe_ingredient -> {ingredient_to_add}")
-                
-                recipe_ingredient = RecipeIngredient(
-                    ingredient_id=ingredient_to_add.id, 
-                    recipe_id=recipe.id,
-                    amount=1.0,  # default to 1.0 for now until fully implement amount
-                    unit_id=UUID("994e5e0d-790d-48ac-8e77-2a8a089b3cf2"),  # default to this for now until implement unit
-                    ingredient_name=ingredient_to_add.ingredient_name, # denormalized field for easier searching
-                    unit_name="teaspoon" # default to this for now until implement unit
-                )
-
-                save_to_db(recipe_ingredient)
+            current_app.logger.debug("--> Creating Recipe+Ingredients Data")
+            IngredientService.add_ingredients_to_recipe(ingredients_to_add["saved"], recipe.id)
 
         current_app.logger.debug("---------- Finished Post Recipe ----------")
         return recipe
