@@ -9,9 +9,10 @@ Tests for adding an ingredient.
 import pytest
 
 from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.exceptions import HTTPException
 
 from src.app.extensions import db as _db
-from src.app.routes.v1.ingredient_routes import add_ingredients
+from src.app.services.ingredient_services import IngredientService
 
 from tests.helpers import serialize_ingredients
 
@@ -25,57 +26,46 @@ class TestAddIngredientStaticMethodWithDbErrors:
         """
         Tests the static method adds ingredients to the db errors correctly
         """
-        ingredients = [{"ingredient_name": "stew"}]
+        ingredients_to_add = [{"ingredient_name": "stew"}]
+        expected_response = [
+            {"ingredient_id": None, "ingredient_name": "stew"}
+        ]
 
         # Monkeypatch db.session.commit to raise SQLAlchemyError
         def bad_commit():
             raise SQLAlchemyError("DB error")
         
         monkeypatch.setattr(_db.session, "commit", bad_commit)
-        response = add_ingredients(ingredients)
 
-        # We don't call abort on this method as we want to respond to user
-        # with what failed to save so they can decide next step
-        # we save anything that works
-        expected_response = {
-            "failed": [
-                {
-                    "ingredient_name": "stew"
-                }
-            ], 
-            "saved": []    
-        }
+        # Expect the abort() call to raise an HTTPException
+        with pytest.raises(HTTPException) as exc_info:
+            IngredientService.save_ingredients(ingredients_to_add)
 
-        assert {
-            "saved": serialize_ingredients(response["saved"]),
-            "failed": serialize_ingredients(response["failed"])
-        } == expected_response
+        # Check the abort code and message
+        assert exc_info.value.code == 422 or exc_info.value.code == 500
+        assert f"Failed to create all ingredients, review and try again. Failed: {expected_response}" in exc_info.value.data["message"]
 
     
     def test_add_new_ingredient_GenericError(self, monkeypatch):
         """
         Tests the static method adds ingredients to the db errors correctly
         """
-        ingredients = [{"ingredient_name": "Milk"}]
+        ingredients_to_add = [{"ingredient_name": "Milk"}]
+        expected_response = [
+            {"ingredient_id": None, "ingredient_name": "milk"}
+        ]
 
         # Monkeypatch db.session.commit to raise GenericError
         def bad_commit():
             raise RuntimeError("Something went wrong!")
         
         monkeypatch.setattr(_db.session, "commit", bad_commit)
-        response = add_ingredients(ingredients)
+        
+       # Expect the abort() call to raise an HTTPException
+        with pytest.raises(HTTPException) as exc_info:
+            IngredientService.save_ingredients(ingredients_to_add)
 
-        expected_response = {
-            "failed": [
-                {
-                    "ingredient_name": "milk" # gets converted to lowercase
-                }
-            ], 
-            "saved": []    
-        }
-
-        assert {
-            "saved": serialize_ingredients(response["saved"]),
-            "failed": serialize_ingredients(response["failed"])
-        } == expected_response
+        # Check the abort code and message
+        assert exc_info.value.code == 422 or exc_info.value.code == 500
+        assert f"Failed to create all ingredients, review and try again. Failed: {expected_response}" in exc_info.value.data["message"]
 
