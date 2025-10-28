@@ -185,6 +185,7 @@ class RecipeResponseSchema(BaseRecipeSchema):
     
     # Include the nested RecipeIngredient data
     recipe_ingredients = fields.Nested(BaseRecipeIngredientSchema, many=True)
+    # ingredients = fields.Nested(BaseRecipeIngredientSchema, many=True)
 
 
 # ------------------
@@ -220,4 +221,5 @@ class InternalRecipeResponseSchema(BaseRecipeSchema):
 
     # Include the FULL RecipeIngredient data by using the Internal schema
     recipe_ingredients = fields.Nested(InternalRecipeIngredientSchema, many=True)
+    # ingredients = fields.Nested(InternalRecipeIngredientSchema, many=True)
 

@@ -190,8 +190,25 @@ class RecipeResource(MethodView):
             if name_taken:
                 abort(400, message="Recipe name already in use, name must be unique")
 
-        # If no aborts, then update all recipe fields
-        for key, value in update_data.items(): # .items accesses the entries in the dict
+        # If no aborts, then check for new ingredients
+        current_app.logger.debug("--> Checking Ingredients")
+        if update_data.get("ingredients"):
+            current_app.logger.debug("--> Removing original ingredients")
+            IngredientService.remove_ingredients_from_recipe(recipe_id)
+
+            current_app.logger.debug("--> Creating Ingredients")
+            ingredients_to_add = IngredientService.save_ingredients(update_data["ingredients"])
+            # if any failures to save ingredient to db occur, save_ingredient service aborts with message to client
+
+            current_app.logger.debug("--> Creating Recipe+Ingredients Data")
+            IngredientService.add_ingredients_to_recipe(ingredients_to_add, recipe_uuid)
+
+        # we add ingredients to the association table not to the recipe directly
+        # so drop them before mapping the other updates
+        recipe_data = update_data.copy()
+        recipe_data.pop("ingredients", None) # if no ingredients exist return None, prevents errors for missing optional key (ingredients is optional)
+        current_app.logger.debug(f"Recipe update_data post pop: {recipe_data}")
+        for key, value in recipe_data.items(): # .items accesses the entries in the dict
             setattr(recipe, key, value)
 
         try:

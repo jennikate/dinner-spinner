@@ -29,7 +29,7 @@ class IngredientService:
         Adds new ingredients to the database if they don't already exist,
         and returns a list of ingredient IDs.
         """
-        current_app.logger.debug("---------- Starting Add Ingredient Method ----------")
+        current_app.logger.debug("---------- Starting Save Ingredient Method ----------")
         current_app.logger.debug(f"Getting ids for -> {ingredients}")
         ingredients_saved = []
         ingredients_failed = []
@@ -63,7 +63,7 @@ class IngredientService:
                 ingredients_saved.append(existing)
 
             else:
-                # add ingredient to database and get its UUID for use on recipe
+                # Save ingredient to database and get its UUID for use on recipe
                 # ingredient_data from the recipe includes amount and unit that is not stored on the ingredient table
                 # so we need to remove these keys before creating the Ingredient object
                 ingredient_data.pop("amount", None)
@@ -97,8 +97,9 @@ class IngredientService:
             abort(422, message=f"Failed to create all ingredients, review and try again. Failed: {mapped_failures}") 
 
         current_app.logger.debug(f"Returning saved -> {ingredients_saved}")
-        current_app.logger.debug("---------- Finished Add Ingredient Method ----------")
+        current_app.logger.debug("---------- Finished Save Ingredient Method ----------")
         return ingredients_saved
+
 
     @staticmethod
     def add_ingredients_to_recipe(ingredients, recipe_id):
@@ -113,10 +114,11 @@ class IngredientService:
         Returns:
             on success or is aborted in save_to_db_abort_on_fail
         """
-
+        current_app.logger.debug("---------- Starting Add Ingredient To Recipe Method ----------")
+        
         for ingredient_to_add in ingredients:
             current_app.logger.debug(f"Adding ingredient to recipe_ingredient -> {ingredient_to_add}")
-            
+
             recipe_ingredient = RecipeIngredient(
                 ingredient_id=ingredient_to_add.id, 
                 recipe_id=recipe_id,
@@ -128,5 +130,43 @@ class IngredientService:
 
             DbService.save_to_db_abort_on_fail(recipe_ingredient)
 
+        current_app.logger.debug("---------- Finished Add Ingredient To Recipe Method ----------")
         return
     
+
+    @staticmethod
+    def remove_ingredients_from_recipe(recipe_id):
+        """
+        As we use PUT methods to update recipes we expect
+        the user to include all the required ingredients (existing and new)
+        Therefore we need to clear all related ingredients from the recipe
+        Before recreating them
+
+        Args:
+            recipe_id: uuid of the recipe to remove ingredients from
+
+        Returns:
+            on success or is aborted in save_to_db_abort_on_fail
+        """
+
+        current_app.logger.debug("---------- Starting Remove Ingredients From Recipe Method ----------")
+        try:
+            recipe_uuid = UUID(recipe_id)
+        except ValueError:
+            abort(400, message="Invalid recipe id")
+
+        try:
+            deleted = RecipeIngredient.query.filter_by(recipe_id=recipe_uuid).delete()
+            db.session.commit()
+            current_app.logger.debug(f"Deleted {deleted} ingredients for recipe {recipe_id}")
+        except SQLAlchemyError as sqle:
+            db.session.rollback()
+            current_app.logger.error(f"SQLAlchemyError writing to db: {str(sqle)}")
+            abort(500, message=f"An error occurred writing to the db")
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Exception writing to db: {str(e)}")
+            abort(500, message=f"An error occurred writing to the db")
+
+        current_app.logger.debug("---------- Finished Remove Ingredients From Recipe Method ----------")
+        return
