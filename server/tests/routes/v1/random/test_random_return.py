@@ -8,14 +8,7 @@ Tests for randomly returning recipes.
 
 import pytest
 
-from sqlalchemy.exc import SQLAlchemyError
-from werkzeug.exceptions import HTTPException
-
 from src.app.constants import DEFAULT_RANDOM_RECIPES
-from src.app.extensions import db as _db
-from src.app.services.ingredient_services import IngredientService
-
-from tests.helpers import serialize_ingredients
 
 
 # =====================================
@@ -62,7 +55,7 @@ class TestReturnRandomRecipes:
 
     def test_return_with_pinned(self, client, large_seeded_recipes):
         """
-        Tests the default amount from constants is used
+        Tests the pinned uuids are returned along with other random
         """
         data_to_post = {
             "pin": [
@@ -84,7 +77,7 @@ class TestReturnRandomRecipes:
         
     def test_return_requested_amount(self, client):
         """
-        Tests the default amount from constants is used
+        Tests the amount returned is as specified
         """
         data_to_post = {
             "number": 3,
@@ -98,7 +91,7 @@ class TestReturnRandomRecipes:
             
     def test_return_requested_amount_and_pinned(self, client, large_seeded_recipes):
         """
-        Tests the default amount from constants is used
+        Tests the pinned and amount to return are correct
         """
         data_to_post = {
             "number": 7,
@@ -123,7 +116,7 @@ class TestReturnRandomRecipes:
 class TestReturnRandomRecipesNotEnough:
     def test_return_when_not_enough_to_meet_default(self, client, seeded_recipes_with_ingredients):
         """
-        Tests the default amount from constants is used
+        Tests all are returned if there are fewer than default amount of recipes
         """
         response = client.post("/v1/random")
         data = response.get_json()
