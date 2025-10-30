@@ -13,6 +13,7 @@ from ..extensions import db as _db
 from ..models.recipes import Recipe
 from ..models.recipe_ingredients import RecipeIngredient
 from .ingredients import BaseIngredientSchema
+from .recipe_ingredient import RecipeIngredientCreateSchema
 
 
 # =====================================
@@ -59,7 +60,7 @@ class BaseRecipeSchema(Schema):
         }
     )
     ingredients = fields.List(
-        fields.Nested(BaseIngredientSchema),
+        fields.Nested(RecipeIngredientCreateSchema),
         required=False
     )
 
@@ -186,6 +187,13 @@ class BaseRecipeIngredientSchema(Schema):
         metadata={
             "description": "The amount of the ingredient",
             "example": "1.5"
+        }
+    )
+    unit_id = fields.UUID(
+        required=True, 
+        metadata={
+            "description": "The id of the unit for this ingredient",
+            "example": "id=<uuid>, which relates to teaspoon"
         }
     )
 

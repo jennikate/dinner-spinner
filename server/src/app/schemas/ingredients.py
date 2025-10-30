@@ -51,14 +51,15 @@ class IngredientTypeSchema(BaseIngredientSchema):
         include_fk = True
         include_relationships = False   # stop Marshmallow automatically adding nested fields from the model, let me control this & serialization
 
-    type_id = fields.UUID(
-        required=True, 
-        load_only=True,
-        metadata={
-            "description": "The id of the type for this ingredient",
-            "example": "id=<uuid>, which relates to fresh"
-        }
-    )
+    # Type not yet implemented
+    # type_id = fields.UUID(
+    #     required=True, 
+    #     load_only=True,
+    #     metadata={
+    #         "description": "The id of the type for this ingredient",
+    #         "example": "id=<uuid>, which relates to fresh"
+    #     }
+    # )
 
 
 class IngredientCreateSchema(IngredientTypeSchema):
@@ -68,20 +69,20 @@ class IngredientCreateSchema(IngredientTypeSchema):
         include_fk = True
         include_relationships = False   # stop Marshmallow automatically adding nested fields from the model, let me control this & serialization
 
-    amount = fields.Float(
-        required=True,
-        metadata={
-            "description": "The amount of the ingredient",
-            "example": "1.5"
-        }
-    )
-    unit_id = fields.UUID(
-        required=True, 
-        metadata={
-            "description": "The id of the unit for this ingredient",
-            "example": "id=<uuid>, which relates to teaspoon"
-        }
-    )
+    # amount = fields.Float(
+    #     required=True,
+    #     metadata={
+    #         "description": "The amount of the ingredient",
+    #         "example": "1.5"
+    #     }
+    # )
+    # unit_id = fields.UUID(
+    #     required=True, 
+    #     metadata={
+    #         "description": "The id of the unit for this ingredient",
+    #         "example": "id=<uuid>, which relates to teaspoon"
+    #     }
+    # )
     
     # NOTE: ingredients created via /recipe do not his this validation
     # as /recipe connects to the add ingredient static method
@@ -106,10 +107,10 @@ class IngredientResponseSchema(BaseIngredientSchema):
         load_instance = True
         include_fk = True
 
-    amount = fields.Float(
-        required=True,
-        metadata={
-            "description": "The amount of the ingredient",
-            "example": "1.5"
-        }
-    )
+    # amount = fields.Float(
+    #     required=True,
+    #     metadata={
+    #         "description": "The amount of the ingredient",
+    #         "example": "1.5"
+    #     }
+    # )
