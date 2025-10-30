@@ -8,7 +8,7 @@ This defines the Marshmallow schemas for recipes for the API.
 from marshmallow import Schema, ValidationError, fields, validates_schema
 from marshmallow_sqlalchemy import auto_field
 
-from ..constants import MAX_PER_PAGE
+from ..constants import DEFAULT_RANDOM_RECIPES, MAX_PER_PAGE
 from ..extensions import db as _db
 from ..models.recipes import Recipe
 from ..models.recipe_ingredients import RecipeIngredient
@@ -96,11 +96,11 @@ class BaseRecipeSchema(Schema):
 # ------------------
 # QUERIES
 # ------------------       
-class RecipeQuerySchema(Schema):
+class RecipePaginatedQuerySchema(Schema):
     page = fields.Int(
         load_default=1, # used if page is not in request
         metadata={
-            "description§": "Page number for pagination (1-indexed)",
+            "description": "Page number for pagination (1-indexed)",
             "example": 1
         }
     )      
@@ -152,6 +152,25 @@ class RecipeUpdateSchema(BaseRecipeSchema):
 
 
 # ------------------
+# REQUEST Random
+# ------------------
+class RandomRecipeListRequestSchema(Schema):
+    number = fields.Int(
+        load_default=int(DEFAULT_RANDOM_RECIPES),
+        metadata={
+            "description": "Number of recipes to return",
+            "example": 4
+        }
+    )
+    pin = fields.List(
+        fields.UUID(),
+        metadata={
+            "description": "List of UUIDs to 'keep' when requesting a new random list",
+            "example": "111111, 111112, 111113"
+        }
+    )
+
+# ------------------
 # RETURN client facing
 # ------------------
 # The Base schema is designed for public use
@@ -186,6 +205,23 @@ class RecipeResponseSchema(BaseRecipeSchema):
     # Include the nested RecipeIngredient data
     recipe_ingredients = fields.Nested(BaseRecipeIngredientSchema, many=True)
     # ingredients = fields.Nested(BaseRecipeIngredientSchema, many=True)
+
+
+# Only returns the ID and name (thumbnail if I do images in future)
+# so user can see a list, and can click into each to get the full recipe
+class RandomRecipeListSchema(Schema):
+    class Meta:
+        model = Recipe
+        load_instance = True
+
+    id = fields.UUID(dump_only=True, data_key="recipe_id")
+    recipe_name = fields.Str(
+        required=True, 
+        metadata={
+            "description": "The name of the recipe", 
+            "example": "Beef Goulash"
+        }
+    )
 
 
 # ------------------
