@@ -32,6 +32,7 @@ class IngredientService:
         """
         current_app.logger.debug("---------- Starting Save Ingredient Method ----------")
         current_app.logger.debug(f"Getting ids for -> {ingredients}")
+
         ingredients_saved = []
         ingredients_failed = []
 

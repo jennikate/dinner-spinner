@@ -29,13 +29,20 @@ class TestAddIngredientStaticMethod:
         ]
 
         response = IngredientService.save_ingredients(ingredients)
+        print(f"response -> {response}")
 
         expected_response = [
-            { "ingredient_name": "milk" },
-            { "ingredient_name": "eggs" }
+            { 
+                "ingredient_name": ingredients[0]["ingredient_name"].lower(),
+                "id": response[0]["id"]
+            },
+            {
+                "ingredient_name": ingredients[1]["ingredient_name"].lower(),
+                "id": response[1]["id"]
+            }
         ]
-
-        assert serialize_ingredients(response) == expected_response
+ 
+        assert response == expected_response
 
     
     def test_add_new_ingredient_with_invalid_id(self):
@@ -50,11 +57,17 @@ class TestAddIngredientStaticMethod:
         response = IngredientService.save_ingredients(ingredients)
 
         expected_response = [
-            { "ingredient_name": "milk" },
-            { "ingredient_name": "eggs" }
-        ]  
+            { 
+                "ingredient_name": ingredients[0]["ingredient_name"].lower(),
+                "id": response[0]["id"]
+            },
+            {
+                "ingredient_name": ingredients[1]["ingredient_name"].lower(),
+                "id": response[1]["id"]
+            }
+        ]
 
-        assert serialize_ingredients(response) == expected_response
+        assert response == expected_response
 
 
 @pytest.mark.usefixtures("seeded_ingredients")
@@ -84,16 +97,25 @@ class TestAddIngredientStaticMethodWithExisting:
 
         # check we didn't create a NEW version of the existing ingredient
         for item in response:
-            if item.ingredient_name == seeded["ingredient_name"]:
-                assert item.id == UUID(seeded["ingredient_id"])
+            if item["ingredient_name"] == seeded["ingredient_name"]:
+                assert item["id"] == seeded["ingredient_id"]
 
         expected_response = [
-            { "ingredient_name": seeded["ingredient_name"] },
-            { "ingredient_name": "milk" },
-            { "ingredient_name": "eggs" }
-        ]    
+            { 
+                "ingredient_name": ingredients[0]["ingredient_name"].lower(),
+                "id":  ingredients[0]["id"]
+            },
+            {
+                "ingredient_name": ingredients[1]["ingredient_name"].lower(),
+                "id": response[1]["id"]
+            },
+            {
+                "ingredient_name": ingredients[2]["ingredient_name"].lower(),
+                "id": response[2]["id"]
+            }
+        ]
 
-        assert serialize_ingredients(response) == expected_response
+        assert response == expected_response
 
 
     def test_add_existing_ingredient_by_string(self, seeded_ingredients):
@@ -105,28 +127,31 @@ class TestAddIngredientStaticMethodWithExisting:
         seeded = schema.dump(seeded_ingredients[0])
 
         ingredients = [
-            {
-               "ingredient_name": seeded["ingredient_name"]
-            },
-            {
-                "ingredient_name": "Milk"
-            }, 
-            {
-                "ingredient_name": "Eggs"
-            }
+            { "ingredient_name": seeded["ingredient_name"]},
+            {  "ingredient_name": "Milk"}, 
+            {  "ingredient_name": "Eggs"}
         ]
 
         response = IngredientService.save_ingredients(ingredients)
 
         # check we didn't create a NEW version of the existing ingredient
         for item in response:
-            if item.ingredient_name == seeded["ingredient_name"]:
-                assert item.id == UUID(seeded["ingredient_id"])
+            if item["ingredient_name"] == seeded["ingredient_name"]:
+                assert item["id"] == UUID(seeded["ingredient_id"])
 
         expected_response = [
-            { "ingredient_name": seeded["ingredient_name"].lower() },
-            { "ingredient_name": "milk" },
-            { "ingredient_name": "eggs" }
-        ]   
+            { 
+                "ingredient_name": ingredients[0]["ingredient_name"].lower(),
+                "id":  ingredients[0]["id"]
+            },
+            {
+                "ingredient_name": ingredients[1]["ingredient_name"].lower(),
+                "id": response[1]["id"]
+            },
+            {
+                "ingredient_name": ingredients[2]["ingredient_name"].lower(),
+                "id": response[2]["id"]
+            }
+        ]
 
-        assert serialize_ingredients(response) == expected_response
+        assert response == expected_response

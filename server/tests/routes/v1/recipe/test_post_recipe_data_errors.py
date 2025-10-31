@@ -55,6 +55,12 @@ class TestPostRecipeWithErrors:
                 "json": {
                     "ingredients": {
                         "0": {
+                            "amount": [
+                                "Missing data for required field."
+                            ],
+                            "unit_id": [
+                                "Missing data for required field."
+                            ],
                             "ingredient_name": [
                                 "Field may not be null."
                             ]
@@ -66,6 +72,7 @@ class TestPostRecipeWithErrors:
         }
 
         assert response.status_code == 422
+        print(f"response -> {response_data}")
         assert response_data == expected_response
 
     # def test_post_recipe_short_ingredient(self, client, base_recipe):
