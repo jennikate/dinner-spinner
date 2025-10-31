@@ -54,7 +54,7 @@ class IngredientService:
             if ingredient_id and Ingredient.query.get(ingredient_id):
                 existing = Ingredient.query.get(ingredient_id)
                 current_app.logger.debug(f"ID exists true so using id -> {existing.id}")
-                ingredients_saved.append(existing)
+                ingredients_saved.append(existing, **ingredient_data)
 
             # If we do not have an existing ID check if the name string exists in the ingredient table, if it does use that id
             elif ingredient_name and db.session.query(Ingredient).filter(Ingredient.ingredient_name == ingredient_name).first():
@@ -65,10 +65,8 @@ class IngredientService:
             else:
                 # Save ingredient to database and get its UUID for use on recipe
                 # ingredient_data from the recipe includes amount and unit that is not stored on the ingredient table
-                # so we need to remove these keys before creating the Ingredient object
-                ingredient_data.pop("amount", None)
-                ingredient_data.pop("unit", None)
-                ingredient = Ingredient(**ingredient_data)
+                # we only want the ingredient name for the ingredient table
+                ingredient = Ingredient(ingredient_name=ingredient_data["ingredient_name"])
                 current_app.logger.debug(f"Adding new ingredient to database -> {ingredient}")
 
                 try:
@@ -122,7 +120,7 @@ class IngredientService:
             recipe_ingredient = RecipeIngredient(
                 ingredient_id=ingredient_to_add.id, 
                 recipe_id=recipe_id,
-                amount=1.0,  # default to 1.0 for now until fully implement amount
+                amount=ingredient_to_add.amount,
                 unit_id=UUID("994e5e0d-790d-48ac-8e77-2a8a089b3cf2"),  # default to this for now until implement unit
                 ingredient_name=ingredient_to_add.ingredient_name, # denormalized field for easier searching
                 unit_name="teaspoon" # default to this for now until implement unit
