@@ -39,9 +39,9 @@ class IngredientService:
             current_app.logger.debug(f"Checking -> {ingredient_data}")
 
             # convert strings to lowercase, we use != so we don't try to convert UUID strings
-            for value in ingredient_data:  
-                if type(value) == str and value != 'id':
-                    ingredient_data[value] = ingredient_data[value].lower()
+            for key, value in ingredient_data.items():  
+                if isinstance(value, str) and not isinstance(value, UUID): # isinstance check the type of value
+                    ingredient_data[key] = value.lower() # set the value of the key to lowercase
 
             # Set the ingredient ID if it exists to a var, and the name to a var
             # use .get id here because not all ingredients have this key

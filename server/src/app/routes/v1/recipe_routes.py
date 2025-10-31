@@ -73,9 +73,10 @@ class RecipeResource(MethodView):
         current_app.logger.debug("--> Checking Ingredients")
         if new_data.get("ingredients"):
             current_app.logger.debug("--> Creating Ingredients")
+            
             ingredients_to_add = IngredientService.save_ingredients(new_data["ingredients"])
             # if any failures to save ingredient to db occur, save_ingredient service aborts with message to client
-
+            
         current_app.logger.debug(f"--> Creating Recipe")
         # validation is set on the schema and run via the 
         # @blp.arguements command, erroring out before code reaches here
