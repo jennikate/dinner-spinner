@@ -9,6 +9,7 @@ Services related to ingredients
 from uuid import UUID
 from flask import current_app
 from flask_smorest import abort
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError # to catch db errors
 
 from ..extensions import db
@@ -54,35 +55,44 @@ class IngredientService:
             if ingredient_id and Ingredient.query.get(ingredient_id):
                 existing = Ingredient.query.get(ingredient_id)
                 current_app.logger.debug(f"ID exists true so using id -> {existing.id}")
-                ingredients_saved.append(existing, **ingredient_data)
+                ingredients_saved.append(ingredient_data)
 
             # If we do not have an existing ID check if the name string exists in the ingredient table, if it does use that id
-            elif ingredient_name and db.session.query(Ingredient).filter(Ingredient.ingredient_name == ingredient_name).first():
-                existing = db.session.query(Ingredient).filter(Ingredient.ingredient_name == ingredient_name).first()
-                current_app.logger.debug(f"Name exists so using that name's id -> {existing.id}")
-                ingredients_saved.append(existing)
-
+            # elif ingredient_name and db.session.query(Ingredient).filter(Ingredient.ingredient_name == ingredient_name).first():
+            #     existing = db.session.query(Ingredient).filter(Ingredient.ingredient_name == ingredient_name).first()
+            #     current_app.logger.debug(f"Name exists so using that name's id -> {existing.id}")
+            #     ingredients_saved.append(existing)
             else:
-                # Save ingredient to database and get its UUID for use on recipe
-                # ingredient_data from the recipe includes amount and unit that is not stored on the ingredient table
-                # we only want the ingredient name for the ingredient table
-                ingredient = Ingredient(ingredient_name=ingredient_data["ingredient_name"])
-                current_app.logger.debug(f"Adding new ingredient to database -> {ingredient}")
+                statement = select(Ingredient).filter_by(ingredient_name=ingredient_name)
+                existing = db.session.execute(statement).scalar_one_or_none()  # returns Ingredient or None
 
-                try:
-                    db.session.add(ingredient)
-                    db.session.commit()
-                    ingredients_saved.append(ingredient)
-                except SQLAlchemyError as sqle:
-                    db.session.rollback()
-                    print(f"SQLAlchemyError writing to db: {str(sqle)}")
-                    
-                    current_app.logger.error(f"SQLAlchemyError writing to db: {str(sqle)}")
-                    ingredients_failed.append(ingredient)
-                except Exception as e:
-                    db.session.rollback()
-                    current_app.logger.error(f"Exception writing to db: {str(e)}")
-                    ingredients_failed.append(ingredient)
+                if existing:
+                    current_app.logger.debug(f"Name exists so using that {ingredient_name}'s id -> {existing.id}")
+                    ingredient_data["id"] = existing.id
+                    ingredients_saved.append(ingredient_data)
+
+                else:
+                    # Save ingredient to database and get its UUID for use on recipe
+                    # ingredient_data from the recipe includes amount and unit that is not stored on the ingredient table
+                    # we only want the ingredient name for the ingredient table
+                    ingredient = Ingredient(ingredient_name=ingredient_data["ingredient_name"])
+                    current_app.logger.debug(f"Adding new ingredient to database -> {ingredient}")
+
+                    try:
+                        db.session.add(ingredient)
+                        db.session.commit()
+                        ingredient_data["id"] = ingredient.id
+                        ingredients_saved.append(ingredient_data)
+                    except SQLAlchemyError as sqle:
+                        db.session.rollback()
+                        print(f"SQLAlchemyError writing to db: {str(sqle)}")
+                        
+                        current_app.logger.error(f"SQLAlchemyError writing to db: {str(sqle)}")
+                        ingredients_failed.append(ingredient)
+                    except Exception as e:
+                        db.session.rollback()
+                        current_app.logger.error(f"Exception writing to db: {str(e)}")
+                        ingredients_failed.append(ingredient)
 
         # Once all attempted, if any failed abort and return information to client
         current_app.logger.debug("--> Checking for ingredient failures")
@@ -118,11 +128,11 @@ class IngredientService:
             current_app.logger.debug(f"Adding ingredient to recipe_ingredient -> {ingredient_to_add}")
 
             recipe_ingredient = RecipeIngredient(
-                ingredient_id=ingredient_to_add.id, 
+                ingredient_id=ingredient_to_add["id"], 
                 recipe_id=recipe_id,
-                amount=ingredient_to_add.amount,
-                unit_id=UUID("994e5e0d-790d-48ac-8e77-2a8a089b3cf2"),  # default to this for now until implement unit
-                ingredient_name=ingredient_to_add.ingredient_name, # denormalized field for easier searching
+                amount=ingredient_to_add["amount"],
+                unit_id=ingredient_to_add["unit_id"],  # default to this for now until implement unit
+                ingredient_name=ingredient_to_add["ingredient_name"],
                 unit_name="teaspoon" # default to this for now until implement unit
             )
 
